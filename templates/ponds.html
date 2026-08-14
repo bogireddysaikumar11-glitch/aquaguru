@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Ponds"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Pond Management"|translate }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0"><i class="fas fa-water text-primary me-2"></i> {{ "Ponds"|translate }}</h5>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPondModal">
+                <i class="fas fa-plus me-1"></i> {{ "Add New Pond"|translate }}
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ "Pond Name"|translate }}</th>
+                        <th>{{ "Area (m²)"|translate }}</th>
+                        <th>{{ "Species"|translate }}</th>
+                        <th>{{ "Seed Count"|translate }}</th>
+                        <th>{{ "Stocking Date"|translate }}</th>
+                        <th>{{ "Days in Culture"|translate }}</th>
+                        <th>{{ "Status"|translate }}</th>
+                        <th>{{ "Actions"|translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pond in ponds %}
+                    <tr>
+                        <td class="fw-bold">{{ pond.pond_name }}</td>
+                        <td>{{ pond.area }}</td>
+                        <td>{{ pond.species }}</td>
+                        <td>{{ pond.seed_count }}</td>
+                        <td>{{ pond.stocking_date }}</td>
+                        
+                        <td>
+                            {% if pond.stocking_date %}
+                                <span class="badge bg-info rounded-pill">{{ pond.stocking_date|days_since }} {{ "Days"|translate }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            {% if pond.status == 'active' %}
+                                <span class="badge bg-success">{{ "Active"|translate }}</span>
+                            {% elif pond.status == 'harvested' %}
+                                <span class="badge bg-secondary">{{ "Harvested"|translate }}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">{{ pond.status|translate }}</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- ============= ACTIONS COLUMN ============= -->
+                        <td>
+                            <!-- EDIT BUTTON -->
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editPondModal{{ pond.id }}" 
+                                    title="{{ 'Edit'|translate }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+
+                            <!-- DELETE BUTTON -->
+                            <form action="/delete-pond/{{ pond.id }}" method="POST" style="display: inline-block;" 
+                                  onsubmit="return confirm('{{ 'Are you sure you want to delete this pond?'|translate }}');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|translate }}">
+                                <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <!-- ============= EDIT MODAL FOR THIS POND ============= -->
+                    <div class="modal fade" id="editPondModal{{ pond.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form action="/edit-pond" method="POST">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">{{ "Edit Pond"|translate }}: {{ pond.pond_name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="pond_id" value="{{ pond.id }}">
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">{{ "Pond Name"|translate }}</label>
+                                            <input type="text" name="pond_name" class="form-control" value="{{ pond.pond_name }}" required>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">{{ "Area (m²)"|translate }}</label>
+                                                <input type="number" step="0.1" name="area" class="form-control" value="{{ pond.area }}" required>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">{{ "Seed Count"|translate }}</label>
+                                                <input type="number" name="seed_count" class="form-control" value="{{ pond.seed_count }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 mt-2">
+                                            <label class="form-label small fw-bold">{{ "Species"|translate }}</label>
+                                            <input type="text" name="species" class="form-control" value="{{ pond.species }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">{{ "Stocking Date"|translate }}</label>
+                                            <input type="date" name="stocking_date" class="form-control" value="{{ pond.stocking_date }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ "Cancel"|translate }}</button>
+                                        <button type="submit" class="btn btn-primary">{{ "Save Changes"|translate }}</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ============= END EDIT MODAL ============= -->
+
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">{{ "No data recorded yet."|translate }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============= ADD POND MODAL ============= -->
+<div class="modal fade" id="addPondModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/add-pond" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ "Add New Pond"|translate }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">{{ "Pond Name"|translate }}</label>
+                        <input type="text" name="pond_name" class="form-control" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">{{ "Area (m²)"|translate }}</label>
+                            <input type="number" step="0.1" name="area" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">{{ "Seed Count"|translate }}</label>
+                            <input type="number" name="seed_count" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-2">
+                        <label class="form-label small fw-bold">{{ "Species"|translate }}</label>
+                        <input type="text" name="species" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">{{ "Stocking Date"|translate }}</label>
+                        <input type="date" name="stocking_date" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ "Cancel"|translate }}</button>
+                    <button type="submit" class="btn btn-primary">{{ "Save Pond"|translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

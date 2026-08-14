@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaGuru - {% block title %}{{ "Dashboard"|translate }}{% endblock %}</title>
+    
+    <!-- Preconnect CDNs for fast loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body { background-color: #f4f6f9; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            height: 100vh; width: 250px; background: #1a1f36; color: #a0aec0;
+            position: fixed; top: 0; left: 0; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease-in-out; display: flex; flex-direction: column;
+        }
+        .sidebar-brand { flex-shrink: 0; color: #fff; font-size: 1.25rem; font-weight: 600; padding: 20px 20px; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 10px; }
+        .sidebar-brand i { color: #48bb78; }
+        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding: 10px 0; }
+        .sidebar-nav-container::-webkit-scrollbar { width: 5px; }
+        .sidebar-nav-container::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+        .sidebar .nav-link { color: #a0aec0; padding: 12px 20px; margin: 5px 10px; border-radius: 8px; transition: all 0.2s; font-weight: 500; display: flex; align-items: center; gap: 12px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background-color: #2d3748; transform: translateX(5px); }
+        .sidebar .nav-link i { width: 24px; text-align: center; }
+        .sidebar-footer { flex-shrink: 0; border-top: 1px solid #2d3748; padding: 15px 0; background: #1a1f36; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; }
+
+        /* --- TOP HEADER --- */
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
+        }
+        .user-profile {
+            background: #fff; padding: 8px 15px; border-radius: 50px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;
+        }
+        
+        .lang-btn {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 50px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #0a4a5e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .lang-btn:hover, .lang-btn:focus {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0a4a5e;
+        }
+
+        .firebase-badge {
+            background: #fff8e1;
+            color: #f57f17;
+            border: 1px solid #ffe082;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .firebase-badge:hover {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 991px) {
+            .sidebar { transform: translateX(-100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><i class="fas fa-fish"></i> AquaGuru</div>
+        <div class="sidebar-nav-container">
+            <div class="px-3 mb-2 text-uppercase text-muted small fw-bold">{{ "Main Menu"|translate }}</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard"><i class="fas fa-th-large"></i> {{ "Dashboard"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/ponds' %}active{% endif %}" href="/ponds"><i class="fas fa-water"></i> {{ "Ponds"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/feed' %}active{% endif %}" href="/feed"><i class="fas fa-seedling"></i> {{ "Feed Calculator"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/water-quality' %}active{% endif %}" href="/water-quality"><i class="fas fa-flask"></i> {{ "Water Quality"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/growth' %}active{% endif %}" href="/growth"><i class="fas fa-chart-line"></i> {{ "Growth"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/expenses' %}active{% endif %}" href="/expenses"><i class="fas fa-coins"></i> {{ "Expenses"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/inventory' %}active{% endif %}" href="/inventory"><i class="fas fa-boxes"></i> {{ "Inventory"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/harvest' %}active{% endif %}" href="/harvest"><i class="fas fa-tractor"></i> {{ "Harvest"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/market-rates' %}active{% endif %}" href="/market-rates"><i class="fas fa-chart-line"></i> {{ "Market Rates"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/notifications' %}active{% endif %}" href="/notifications"><i class="fas fa-bell"></i> {{ "Notifications"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/ai-assistant' %}active{% endif %}" href="/ai-assistant"><i class="fas fa-robot"></i> {{ "AI Assistant"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/reports' %}active{% endif %}" href="/reports"><i class="fas fa-file-alt"></i> {{ "Reports"|translate }}</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/profile"><i class="fas fa-user-circle"></i> {{ "Profile"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> {{ "Logout"|translate }}</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <div class="main-content">
+        
+        <!-- TOP HEADER (FIREBASE STATUS, LANGUAGE SWITCHER & USER INFO) -->
+        <div class="top-header">
+            <div>
+                <h3 class="fw-bold mb-0">{% block page_title %}{{ "Dashboard"|translate }}{% endblock %}</h3>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Firebase Cloud Status Badge -->
+                <div class="firebase-badge shadow-sm" id="firebaseSyncBtn" onclick="triggerFirebaseSync()" title="Click to sync data with Firebase Firestore Cloud">
+                    <i class="fas fa-fire text-warning"></i>
+                    <span id="firebaseStatusText">Firebase Cloud</span>
+                </div>
+
+                <!-- Instant Language Dropdown Switcher -->
+                <!-- Instant Language Dropdown Switcher -->
+                <div class="dropdown">
+                    <button class="btn lang-btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe text-success fa-lg"></i>
+                        <span id="currentLangLabel">{% if session.get('lang') == 'te' %}తెలుగు (Telugu){% else %}English{% endif %}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" aria-labelledby="languageDropdown">
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center justify-content-between {% if session.get('lang') != 'te' %}active fw-bold text-white bg-primary{% endif %}" 
+                               href="javascript:void(0);" onclick="setAquaLanguage('en')">
+                                <span>🇬🇧 English</span>
+                                {% if session.get('lang') != 'te' %}<i class="fas fa-check small ms-2"></i>{% endif %}
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center justify-content-between {% if session.get('lang') == 'te' %}active fw-bold text-white bg-primary{% endif %}" 
+                               href="javascript:void(0);" onclick="setAquaLanguage('te')">
+                                <span>🇮🇳 తెలుగు (Telugu)</span>
+                                {% if session.get('lang') == 'te' %}<i class="fas fa-check small ms-2"></i>{% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- User Profile -->
+                <div class="user-profile">
+                    <i class="fas fa-user-circle fa-lg text-primary"></i>
+                    <span class="fw-bold">{{ session.get('username', 'Farmer') }}</span>
+                    <button class="btn btn-outline-secondary d-lg-none ms-2" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show mb-4">
+                        {{ message|translate }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ==================== SCRIPTS & SDKS ==================== -->
+    <!-- 1. Universal Real-Time Translator -->
+    <script src="{{ url_for('static', filename='js/translator.js') }}"></script>
+    
+    <!-- 2. Bootstrap 5 & Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 3. Firebase SDKs (v10 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+    <script src="{{ url_for('static', filename='js/firebase-init.js') }}"></script>
+
+    <script>
+        // Sidebar toggle for mobile
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+        }
+
+        // Trigger manual Firebase Sync
+        function triggerFirebaseSync() {
+            const statusText = document.getElementById('firebaseStatusText');
+            if (statusText) statusText.textContent = 'Syncing...';
+            
+            fetch('/api/firebase/sync', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        if (statusText) statusText.textContent = 'Firebase Synced ✓';
+                        setTimeout(() => { if (statusText) statusText.textContent = 'Firebase Cloud'; }, 3000);
+                    } else {
+                        if (statusText) statusText.textContent = 'Sync Failed';
+                    }
+                })
+                .catch(() => {
+                    if (statusText) statusText.textContent = 'Firebase Cloud';
+                });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

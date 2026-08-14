@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Water Quality"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Water Quality Monitoring"|translate }}{% endblock %}
+
+{% block content %}
+<div class="water-quality-container">
+    <div class="row g-4">
+        <!-- Log Water Quality Form -->
+        <div class="col-xl-5 col-lg-12">
+            <div class="card water-quality-form-card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-flask text-primary me-2"></i> {{ "Log Water Parameters"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('save_water_quality') }}" enctype="multipart/form-data" id="waterQualityForm">
+                        <div class="mb-3">
+                            <label for="wq_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="wq_pond" name="pond_id" required>
+                                <option value="">{{ "Select Pond"|translate }}</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="wq_date" class="form-label small fw-bold">{{ "Date"|translate }}</label>
+                            <input type="datetime-local" class="form-control" id="wq_date" name="date" required>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="wq_ph" class="form-label small fw-bold">{{ "pH Level"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_ph" name="ph" step="0.01" value="7.8" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="wq_do" class="form-label small fw-bold">{{ "Dissolved Oxygen (DO mg/L)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_do" name="do" step="0.1" value="5.2" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="wq_temperature" class="form-label small fw-bold">{{ "Temperature (°C)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_temperature" name="temperature" step="0.1" value="28.5" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="wq_salinity" class="form-label small fw-bold">{{ "Salinity (ppt)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_salinity" name="salinity" step="0.1" value="15.0">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="wq_ammonia" class="form-label small fw-bold">{{ "Ammonia (ppm)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_ammonia" name="ammonia" step="0.001" value="0.02">
+                            </div>
+                            <div class="col-6">
+                                <label for="wq_nitrite" class="form-label small fw-bold">{{ "Nitrite (ppm)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_nitrite" name="nitrite" step="0.001" value="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="wq_alkalinity" class="form-label small fw-bold">{{ "Alkalinity (ppm)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_alkalinity" name="alkalinity" step="0.1" value="120.0">
+                            </div>
+                            <div class="col-6">
+                                <label for="wq_transparency" class="form-label small fw-bold">{{ "Transparency (cm)"|translate }}</label>
+                                <input type="number" class="form-control" id="wq_transparency" name="transparency" step="0.1" value="30.0">
+                            </div>
+                        </div>
+
+                        <!-- PHOTO UPLOAD & CAMERA CAPTURE SECTION -->
+                        <div class="mb-3 p-3 rounded-3 bg-light border">
+                            <label class="form-label small fw-bold d-flex align-items-center justify-content-between mb-2">
+                                <span><i class="fas fa-camera text-primary me-1"></i> {{ "Water Photo / Sample"|translate }}</span>
+                                <small class="text-muted">({{ "Water Sample Photo"|translate }})</small>
+                            </label>
+                            
+                            <!-- Trigger Action Buttons -->
+                            <div class="d-flex gap-2 mb-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold flex-fill" onclick="triggerFileInput()">
+                                    <i class="fas fa-folder-open me-1"></i> {{ "Choose from Files"|translate }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success fw-semibold flex-fill" onclick="triggerCameraCapture()">
+                                    <i class="fas fa-camera me-1"></i> {{ "Take Photo (Camera)"|translate }}
+                                </button>
+                            </div>
+
+                            <!-- Hidden Inputs -->
+                            <input type="file" id="wqPhotoFile" name="photo_file" accept="image/*" style="display:none;" onchange="previewSelectedImage(this)">
+                            <input type="file" id="wqPhotoCamera" name="photo_camera" accept="image/*" capture="environment" style="display:none;" onchange="previewSelectedImage(this)">
+                            <input type="hidden" id="wqPhotoBase64" name="photo_base64" value="">
+
+                            <!-- Live Photo Preview Box -->
+                            <div id="photoPreviewContainer" style="display: none;" class="mt-2 text-center position-relative p-2 bg-white rounded-3 border">
+                                <img id="photoPreviewImg" src="" alt="Water Sample Preview" class="img-fluid rounded-2 shadow-sm" style="max-height: 180px; width: auto; object-fit: contain;">
+                                <div class="mt-2 d-flex justify-content-between align-items-center">
+                                    <small id="photoPreviewName" class="text-muted text-truncate" style="max-width: 180px;"></small>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill" onclick="removeSelectedPhoto()">
+                                        <i class="fas fa-times me-1"></i> {{ "Remove Photo"|translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="wq_notes" class="form-label small fw-bold">{{ "Notes"|translate }}</label>
+                            <textarea class="form-control" id="wq_notes" name="notes" rows="2" placeholder="{{ 'Notes'|translate }}"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                            <i class="fas fa-save me-1"></i> {{ "Save Water Log"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Water Quality Guidelines & History Column -->
+        <div class="col-xl-7 col-lg-12">
+            <!-- Guidelines Card -->
+            <div class="card water-quality-guide-card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i> {{ "Water Quality Guidelines"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-sm-6 col-12">
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "pH Level"|translate }}</span>
+                                <span class="badge bg-success">7.5 - 8.5</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "Dissolved Oxygen (DO mg/L)"|translate }}</span>
+                                <span class="badge bg-success">&gt; 4.0 mg/L</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "Temperature (°C)"|translate }}</span>
+                                <span class="badge bg-success">28 - 32 °C</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center bg-light">
+                                <span class="fw-semibold small">{{ "Salinity (ppt)"|translate }}</span>
+                                <span class="badge bg-success">10 - 25 ppt</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-12">
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "Ammonia (ppm)"|translate }}</span>
+                                <span class="badge bg-success">&lt; 0.1 ppm</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "Nitrite (ppm)"|translate }}</span>
+                                <span class="badge bg-success">&lt; 0.1 ppm</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center mb-2 bg-light">
+                                <span class="fw-semibold small">{{ "Alkalinity (ppm)"|translate }}</span>
+                                <span class="badge bg-success">&gt; 100 ppm</span>
+                            </div>
+                            <div class="p-2 border rounded-2 d-flex justify-content-between align-items-center bg-light">
+                                <span class="fw-semibold small">{{ "Transparency (cm)"|translate }}</span>
+                                <span class="badge bg-success">25 - 40 cm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Water Quality History Card -->
+            <div class="card water-quality-history-card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-history text-warning me-2"></i> {{ "Water Log History"|translate }}
+                    </h5>
+                    <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshWaterQuality()" title="{{ 'Refresh'|translate }}">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="waterQualityTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Date"|translate }}</th>
+                                    <th>{{ "Pond Name"|translate }}</th>
+                                    <th>{{ "pH"|translate }}</th>
+                                    <th>{{ "DO"|translate }}</th>
+                                    <th>{{ "Photo"|translate }}</th>
+                                    <th>{{ "Status"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waterQualityBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== LIVE WEBRTC CAMERA MODAL ==================== -->
+<div class="modal fade" id="liveCameraModal" tabindex="-1" aria-labelledby="liveCameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold" id="liveCameraModalLabel">
+                    <i class="fas fa-video me-2 text-warning"></i> {{ "Live Camera Capture"|translate }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopLiveCamera()"></button>
+            </div>
+            <div class="modal-body text-center p-3 bg-black">
+                <div style="position: relative; max-width: 100%; height: 320px; overflow: hidden; border-radius: 12px; background: #111;">
+                    <video id="liveVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    <canvas id="liveCanvas" style="display: none;"></canvas>
+                </div>
+            </div>
+            <div class="modal-footer bg-light justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="stopLiveCamera()">
+                    {{ "Cancel"|translate }}
+                </button>
+                <button type="button" class="btn btn-success fw-bold px-4" onclick="snapLivePhoto()">
+                    <i class="fas fa-camera me-1"></i> {{ "Take Snapshot"|translate }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PHOTO LIGHTBOX PREVIEW MODAL ==================== -->
+<div class="modal fade" id="viewPhotoModal" tabindex="-1" aria-labelledby="viewPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title fw-bold" id="viewPhotoModalLabel">
+                    <i class="fas fa-image text-primary me-2"></i> {{ "Pond Water Sample Photo"|translate }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="modalSampleImg" src="" alt="Water Sample Photo" class="img-fluid rounded-3 shadow mb-3" style="max-height: 480px; width: auto; object-fit: contain;">
+                <div class="row g-2 text-start p-3 bg-light rounded-3" id="modalSampleDetails">
+                    <div class="col-sm-4 col-6"><strong>{{ "Pond Name"|translate }}:</strong> <span id="modalPondName">-</span></div>
+                    <div class="col-sm-4 col-6"><strong>{{ "Date"|translate }}:</strong> <span id="modalDate">-</span></div>
+                    <div class="col-sm-4 col-6"><strong>{{ "pH"|translate }}:</strong> <span id="modalPH">-</span></div>
+                    <div class="col-sm-4 col-6"><strong>{{ "DO"|translate }}:</strong> <span id="modalDO">-</span></div>
+                    <div class="col-sm-8 col-12"><strong>{{ "Notes"|translate }}:</strong> <span id="modalNotes">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let videoStream = null;
+
+// 1. Trigger File Selector
+function triggerFileInput() {
+    document.getElementById('wqPhotoFile').click();
+}
+
+// 2. Trigger Camera (Mobile or WebRTC)
+function triggerCameraCapture() {
+    // If on mobile browser with camera support
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        document.getElementById('wqPhotoCamera').click();
+    } else {
+        // On desktop/laptop: open Live WebRTC Camera Modal
+        openLiveCamera();
+    }
+}
+
+// 3. Handle File Input Change & Show Live Preview
+function previewSelectedImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('photoPreviewImg').src = e.target.result;
+            document.getElementById('photoPreviewName').textContent = file.name;
+            document.getElementById('photoPreviewContainer').style.display = 'block';
+            document.getElementById('wqPhotoBase64').value = ''; // clear base64 if standard file selected
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// 4. Remove Photo Action
+function removeSelectedPhoto() {
+    document.getElementById('wqPhotoFile').value = '';
+    document.getElementById('wqPhotoCamera').value = '';
+    document.getElementById('wqPhotoBase64').value = '';
+    document.getElementById('photoPreviewImg').src = '';
+    document.getElementById('photoPreviewContainer').style.display = 'none';
+}
+
+// 5. Open WebRTC Live Camera Modal
+function openLiveCamera() {
+    const modalEl = document.getElementById('liveCameraModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(function(stream) {
+                videoStream = stream;
+                const video = document.getElementById('liveVideo');
+                video.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.error("Camera Error:", err);
+                alert("{{ 'Please allow camera permissions to take a photo.'|translate }}");
+                modal.hide();
+                // Fallback to standard camera input
+                document.getElementById('wqPhotoCamera').click();
+            });
+    } else {
+        document.getElementById('wqPhotoCamera').click();
+    }
+}
+
+// 6. Stop Camera Stream
+function stopLiveCamera() {
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+}
+
+// 7. Snap Live Photo from Video
+function snapLivePhoto() {
+    const video = document.getElementById('liveVideo');
+    const canvas = document.getElementById('liveCanvas');
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+    document.getElementById('photoPreviewImg').src = base64Data;
+    document.getElementById('photoPreviewName').textContent = 'Camera_Snapshot.jpg';
+    document.getElementById('photoPreviewContainer').style.display = 'block';
+    document.getElementById('wqPhotoBase64').value = base64Data;
+
+    stopLiveCamera();
+    bootstrap.Modal.getInstance(document.getElementById('liveCameraModal')).hide();
+}
+
+// 8. View Photo Lightbox Modal
+let currentLogs = [];
+function openPhotoModal(index) {
+    const record = currentLogs[index];
+    if (!record || !record.image_path) return;
+
+    document.getElementById('modalSampleImg').src = '/static/' + record.image_path;
+    document.getElementById('modalPondName').textContent = record.pond_name || 'N/A';
+    document.getElementById('modalDate').textContent = record.date || 'N/A';
+    document.getElementById('modalPH').textContent = record.ph || 'N/A';
+    document.getElementById('modalDO').textContent = (record.do ? record.do + ' mg/L' : 'N/A');
+    document.getElementById('modalNotes').textContent = record.notes || '{{ "No notes recorded."|translate }}';
+
+    const modal = new bootstrap.Modal(document.getElementById('viewPhotoModal'));
+    modal.show();
+}
+
+// 9. Load Water Quality Logs via JSON API
+function loadWaterQuality() {
+    fetch('/api/water-quality')
+        .then(response => response.json())
+        .then(data => {
+            currentLogs = data || [];
+            const tbody = document.getElementById('waterQualityBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">{{ "No data recorded yet."|translate }}</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach((record, idx) => {
+                const statusClass = record.status === 'good' ? 'success' : 
+                                   record.status === 'moderate' ? 'warning' : 'danger';
+                
+                // Photo Badge / Thumbnail
+                let photoHtml = `<span class="badge bg-light text-muted border">{{ "No Photo"|translate }}</span>`;
+                if (record.image_path) {
+                    photoHtml = `
+                        <button type="button" class="btn btn-sm btn-light border py-1 px-2 text-primary shadow-sm rounded-pill d-inline-flex align-items-center gap-1" onclick="openPhotoModal(${idx})" title="{{ 'View Photo'|translate }}">
+                            <i class="fas fa-camera text-primary"></i>
+                            <span class="small fw-semibold">{{ "Photo"|translate }}</span>
+                        </button>
+                    `;
+                }
+
+                html += `
+                    <tr>
+                        <td><small>${record.date ? record.date.replace('T', ' ').slice(0, 16) : 'N/A'}</small></td>
+                        <td><strong>${record.pond_name || 'N/A'}</strong></td>
+                        <td><span class="fw-bold">${record.ph}</span></td>
+                        <td>${record.do} mg/L</td>
+                        <td>${photoHtml}</td>
+                        <td><span class="badge bg-${statusClass}">${record.status}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('waterQualityBody').innerHTML = 
+                '<tr><td colspan="6" class="text-center text-muted py-3">{{ "No data recorded yet."|translate }}</td></tr>';
+        });
+}
+
+function refreshWaterQuality() {
+    document.getElementById('waterQualityBody').innerHTML = 
+        '<tr><td colspan="6" class="text-center text-muted py-3">{{ "Loading..."|translate }}</td></tr>';
+    loadWaterQuality();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    // Offset local ISO string for datetime-local input
+    const localIso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    const dateInput = document.getElementById('wq_date');
+    if (dateInput) {
+        dateInput.value = localIso;
+    }
+    loadWaterQuality();
+});
+</script>
+{% endblock %}

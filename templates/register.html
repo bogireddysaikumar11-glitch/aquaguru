@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ "Register"|translate }} - AquaGuru</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f9;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .top-lang-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .app-container {
+            width: 100%; max-width: 440px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .brand-logo {
+            display: block;
+            max-width: 160px;
+            height: auto;
+            margin: 0 auto 15px auto;
+        }
+        .form-control {
+            border-radius: 12px; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0;
+        }
+        .form-control:focus { box-shadow: 0 0 0 3px rgba(12, 91, 115, 0.2); border-color: #0c5b73; }
+        
+        .btn-register {
+            background: #0c5b73; color: white; border-radius: 12px; padding: 12px;
+            font-weight: 600; width: 100%; border: none; transition: 0.3s;
+        }
+        .btn-register:hover { background: #083e52; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <!-- Top Language Selector -->
+    <div class="top-lang-bar">
+        <div class="dropdown">
+            <button class="btn btn-white btn-sm shadow-sm dropdown-toggle rounded-pill px-3 fw-bold border" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-globe text-success me-1"></i>
+                {% if session.get('lang') == 'te' %}తెలుగు{% else %}English{% endif %}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1">
+                <li><a class="dropdown-item py-2 {% if session.get('lang') != 'te' %}fw-bold text-primary{% endif %}" href="javascript:void(0);" onclick="setAquaLanguage('en')">🇬🇧 English</a></li>
+                <li><a class="dropdown-item py-2 {% if session.get('lang') == 'te' %}fw-bold text-primary{% endif %}" href="javascript:void(0);" onclick="setAquaLanguage('te')">🇮🇳 తెలుగు (Telugu)</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- LOGO -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru Logo" class="brand-logo">
+        
+        <h4 class="text-center fw-bold mb-1" style="color: #0a4a5e;">{{ "Create an Account"|translate }}</h4>
+        <p class="text-center text-muted small mb-4">{{ "Join AquaGuru today"|translate }}</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show py-2 small">
+                        {{ message|translate }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/register" method="POST">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">{{ "Email / Username"|translate }}</label>
+                <input type="text" name="username" class="form-control" placeholder="{{ 'Email / Username'|translate }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">{{ "Email"|translate }}</label>
+                <input type="email" name="email" class="form-control" placeholder="{{ 'Email'|translate }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">{{ "Password"|translate }}</label>
+                <input type="password" name="password" class="form-control" placeholder="{{ 'Password'|translate }}" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-muted">{{ "Confirm Password"|translate }}</label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="{{ 'Confirm Password'|translate }}" required>
+            </div>
+
+            <button type="submit" class="btn-register mb-3">{{ "Sign Up"|translate }}</button>
+        </form>
+
+        <div class="text-center small text-muted">
+            {{ "Already have an account?"|translate }} <a href="/login" class="text-primary fw-bold text-decoration-none">{{ "Login"|translate }}</a>
+        </div>
+    </div>
+
+    <!-- Universal Real-Time Translator -->
+    <script src="{{ url_for('static', filename='js/translator.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Expenses"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Expense Tracking"|translate }}{% endblock %}
+
+{% block content %}
+<div class="expenses-container">
+    <!-- Expense Summary Cards -->
+    <div class="row g-4 stats-row">
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-warning-subtle text-warning rounded-circle">
+                        <i class="fas fa-calendar-day fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="stat-value text-dark mb-0">${{ "%.2f"|format(daily_expense) }}</h3>
+                        <p class="stat-label text-muted mb-0">{{ "Daily Expenses"|translate }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-info-subtle text-info rounded-circle">
+                        <i class="fas fa-calendar-alt fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="stat-value text-dark mb-0">${{ "%.2f"|format(monthly_expense) }}</h3>
+                        <p class="stat-label text-muted mb-0">{{ "Monthly Expenses"|translate }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-danger-subtle text-danger rounded-circle">
+                        <i class="fas fa-coins fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="stat-value text-danger mb-0">${{ "%.2f"|format(total_expense) }}</h3>
+                        <p class="stat-label text-muted mb-0">{{ "Total Expenses"|translate }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mt-2">
+        <!-- Add Expense -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card expense-form-card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-plus-circle text-success me-2"></i> {{ "Add Farm Expense"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('save_expense') }}">
+                        <div class="mb-3">
+                            <label for="expense_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="expense_pond" name="pond_id">
+                                <option value="">{{ "Select Pond"|translate }} (Optional)</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expense_category" class="form-label small fw-bold">{{ "Category"|translate }}</label>
+                            <select class="form-select" id="expense_category" name="category" required>
+                                <option value="">{{ "Category"|translate }}</option>
+                                <option value="Feed">Feed (దాణా)</option>
+                                <option value="Medicine">Medicine (మందులు)</option>
+                                <option value="Diesel">Diesel (డీజిల్)</option>
+                                <option value="Electricity">Electricity (విద్యుత్)</option>
+                                <option value="Labour">Labour (కూలి)</option>
+                                <option value="Seed">Seed (విత్తనం)</option>
+                                <option value="Minerals">Minerals (ఖనిజాలు)</option>
+                                <option value="Probiotics">Probiotics (ప్రోబయోటిక్స్)</option>
+                                <option value="Other">Other (ఇతరములు)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expense_amount" class="form-label small fw-bold">{{ "Amount ($)"|translate }}</label>
+                            <input type="number" class="form-control" id="expense_amount" name="amount" step="0.01" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expense_date" class="form-label small fw-bold">{{ "Date"|translate }}</label>
+                            <input type="date" class="form-control" id="expense_date" name="date" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expense_description" class="form-label small fw-bold">{{ "Description"|translate }}</label>
+                            <textarea class="form-control" id="expense_description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            <i class="fas fa-save me-1"></i> {{ "Save Expense"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expense Chart -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="card expense-chart-card shadow-sm border-0 h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-chart-pie text-primary me-2"></i> {{ "Financial Summary"|translate }}
+                    </h5>
+                    <div class="card-header-actions">
+                        <select class="form-select form-select-sm" id="expenseChartType">
+                            <option value="doughnut">Doughnut Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="bar">Bar Chart</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expense Records Table -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card expense-records-card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-history text-info me-2"></i> {{ "Expense History"|translate }}
+                    </h5>
+                    <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshExpenses()" title="{{ 'Refresh'|translate }}">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="expenseRecordsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Date"|translate }}</th>
+                                    <th>{{ "Pond Name"|translate }}</th>
+                                    <th>{{ "Category"|translate }}</th>
+                                    <th>{{ "Description"|translate }}</th>
+                                    <th>{{ "Amount ($)"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseRecordsBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let expenseData = [];
+let expenseChart = null;
+
+function loadExpenses() {
+    fetch('/api/expenses')
+        .then(response => response.json())
+        .then(data => {
+            expenseData = data || [];
+            const tbody = document.getElementById('expenseRecordsBody');
+            if (expenseData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No expense records found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            expenseData.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.date ? new Date(record.date).toLocaleDateString() : 'N/A'}</td>
+                        <td>${record.pond_name || '-'}</td>
+                        <td><span class="badge bg-info text-dark">${record.category}</span></td>
+                        <td>${record.description || '-'}</td>
+                        <td class="text-danger fw-bold">$${parseFloat(record.amount).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            
+            // Update chart
+            updateExpenseChart(expenseData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('expenseRecordsBody').innerHTML = 
+                '<tr><td colspan="5" class="text-center text-danger">Error loading expense records</td></tr>';
+        });
+}
+
+function updateExpenseChart(data) {
+    if (typeof Chart === 'undefined') return;
+    const canvas = document.getElementById('expenseChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Aggregate by category
+    const categoryTotals = {};
+    data.forEach(item => {
+        const cat = item.category || 'Other';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + (parseFloat(item.amount) || 0);
+    });
+    
+    const labels = Object.keys(categoryTotals);
+    const amounts = Object.values(categoryTotals);
+    
+    if (expenseChart) {
+        expenseChart.destroy();
+    }
+    
+    const chartType = document.getElementById('expenseChartType') ? document.getElementById('expenseChartType').value : 'doughnut';
+    expenseChart = new Chart(ctx, {
+        type: chartType,
+        data: {
+            labels: labels,
+            datasets: [{
+                data: amounts,
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                    '#6f42c1', '#fd7e14', '#20c997', '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+}
+
+function refreshExpenses() {
+    document.getElementById('expenseRecordsBody').innerHTML = 
+        '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
+    loadExpenses();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chartTypeEl = document.getElementById('expenseChartType');
+    if (chartTypeEl) {
+        chartTypeEl.addEventListener('change', function() {
+            updateExpenseChart(expenseData);
+        });
+    }
+    loadExpenses();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+<!-- templates/ai_assistant.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ "AI Assistant"|translate }} - AquaGuru{% endblock %}
+
+{% block page_title %}{{ "AI Farming Assistant"|translate }}{% endblock %}
+
+{% block content %}
+<div class="ai-assistant-container">
+    <div class="row g-4">
+        <!-- AI Chat -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="card ai-chat-card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-robot text-primary me-2"></i> {{ "AI Assistant"|translate }}
+                    </h5>
+                    <span class="badge bg-success rounded-pill px-3">{{ "Online"|translate }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="chat-container" id="chatContainer" style="min-height: 380px; max-height: 450px; overflow-y: auto;">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message ai-message p-3 rounded-3 mb-3 bg-light border">
+                                <div class="message-content">
+                                    <p class="fw-bold mb-2">👋 {{ "Ask me anything about shrimp farming, water quality, diseases, or feed management!"|translate }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-area mt-3">
+                        <div class="quick-actions mb-3 d-flex flex-wrap gap-2">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="askQuestion('Low DO')">
+                                <i class="fas fa-water me-1"></i> {{ "Low DO"|translate }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="askQuestion('High Ammonia')">
+                                <i class="fas fa-exclamation-triangle me-1"></i> {{ "High Ammonia"|translate }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="askQuestion('White Gut')">
+                                <i class="fas fa-bug me-1"></i> {{ "White Gut"|translate }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-success rounded-pill" onclick="askQuestion('FCR')">
+                                <i class="fas fa-chart-line me-1"></i> {{ "FCR"|translate }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-info rounded-pill" onclick="askQuestion('Water Quality')">
+                                <i class="fas fa-flask me-1"></i> {{ "Water Quality"|translate }}
+                            </button>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="aiQuestion" 
+                                   placeholder="{{ 'Type your aquaculture question...'|translate }}" 
+                                   onkeypress="if(event.key==='Enter') sendQuestion()">
+                            <button class="btn btn-primary px-4 fw-bold" onclick="sendQuestion()">
+                                <i class="fas fa-paper-plane me-1"></i> {{ "Send"|translate }}
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearChat()" title="{{ 'Delete'|translate }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Tips -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i> {{ "Quick Suggestions"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="p-3 mb-3 rounded-3 bg-light border">
+                        <h6 class="fw-bold text-primary mb-1"><i class="fas fa-water me-1"></i> {{ "Low DO"|translate }}</h6>
+                        <p class="small text-muted mb-0">DO &lt; 4.0 ppm: Increase aeration immediately. Reduce feeding by 30-50%.</p>
+                    </div>
+                    
+                    <div class="p-3 mb-3 rounded-3 bg-light border">
+                        <h6 class="fw-bold text-danger mb-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ "High Ammonia"|translate }}</h6>
+                        <p class="small text-muted mb-0">Ammonia &gt; 0.1 ppm: Stop feeding. Increase water exchange. Add probiotics.</p>
+                    </div>
+                    
+                    <div class="p-3 mb-3 rounded-3 bg-light border">
+                        <h6 class="fw-bold text-warning mb-1"><i class="fas fa-bug me-1"></i> {{ "White Gut"|translate }}</h6>
+                        <p class="small text-muted mb-0">Reduce feeding. Add gut probiotics. Check water quality parameters.</p>
+                    </div>
+                    
+                    <div class="p-3 rounded-3 bg-light border">
+                        <h6 class="fw-bold text-info mb-1"><i class="fas fa-flask me-1"></i> {{ "Water Quality Guidelines"|translate }}</h6>
+                        <p class="small text-muted mb-0">Optimal: pH 7.5-8.5, DO &gt; 4.0 mg/L, Temp 28-32°C, Salinity 10-25 ppt.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendQuestion() {
+    const input = document.getElementById('aiQuestion');
+    const question = input.value.trim();
+    if (!question) return;
+    
+    input.value = '';
+    addMessage('user', question);
+    askQuestion(question);
+}
+
+function askQuestion(question) {
+    addMessage('ai', 'Thinking...', true);
+    
+    fetch('/api/ai-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question })
+    })
+    .then(r => r.json())
+    .then(data => {
+        removeLoadingMessage();
+        if (data.answer) {
+            addMessage('ai', data.answer);
+        } else {
+            addMessage('ai', data.error || 'Sorry, I could not process your question.');
+        }
+    })
+    .catch(err => {
+        removeLoadingMessage();
+        addMessage('ai', 'Error connecting to AI service.');
+    });
+}
+
+function addMessage(sender, text, isLoading = false) {
+    const messages = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = sender === 'user' ? 'message user-message p-3 rounded-3 mb-3 bg-primary text-white text-end ms-auto' : 'message ai-message p-3 rounded-3 mb-3 bg-light border';
+    if (sender === 'user') div.style.maxWidth = '80%';
+    if (isLoading) div.id = 'aiLoadingMsg';
+    div.innerHTML = `<p class="mb-0">${text.replace(/\n/g, '<br>')}</p>`;
+    messages.appendChild(div);
+    document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+}
+
+function removeLoadingMessage() {
+    const l = document.getElementById('aiLoadingMsg');
+    if (l) l.remove();
+}
+
+function clearChat() {
+    document.getElementById('chatMessages').innerHTML = '<div class="message ai-message p-3 rounded-3 mb-3 bg-light border"><p class="fw-bold mb-0">👋 Chat cleared.</p></div>';
+}
+</script>
+{% endblock %}

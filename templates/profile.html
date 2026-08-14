@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "User Profile"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "User Profile"|translate }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Update Profile Form -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0 text-primary">
+                    <i class="fas fa-user-edit me-2"></i> {{ "Personal Information"|translate }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('update_profile') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "Full Name"|translate }}</label>
+                        <input type="text" name="full_name" class="form-control" value="{{ user.full_name or '' }}" placeholder="{{ 'Enter your full name'|translate }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "Email"|translate }}</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email or '' }}" readonly disabled>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "Phone Number"|translate }}</label>
+                        <input type="text" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="{{ 'Enter phone number'|translate }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "Address"|translate }}</label>
+                        <input type="text" name="address" class="form-control" value="{{ user.address or '' }}" placeholder="{{ 'Enter your address'|translate }}">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">{{ "Farm Name"|translate }}</label>
+                        <input type="text" name="farm_name" class="form-control" value="{{ user.farm_name or '' }}" placeholder="{{ 'Enter farm name'|translate }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="fas fa-save me-1"></i> {{ "Update Profile"|translate }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Form -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0 text-danger">
+                    <i class="fas fa-shield-alt me-2"></i> {{ "Security Settings"|translate }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('change_password') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "Current Password"|translate }}</label>
+                        <input type="password" name="current_password" class="form-control" required placeholder="{{ 'Enter current password'|translate }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ "New Password"|translate }}</label>
+                        <input type="password" name="new_password" class="form-control" required placeholder="{{ 'Enter new password'|translate }}">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">{{ "Confirm Password"|translate }}</label>
+                        <input type="password" name="confirm_password" class="form-control" required placeholder="{{ 'Confirm new password'|translate }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-2 fw-bold">
+                        <i class="fas fa-key me-1"></i> {{ "Save Password"|translate }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

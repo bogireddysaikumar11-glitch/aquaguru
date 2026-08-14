@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Growth"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Growth & Sampling"|translate }}{% endblock %}
+
+{% block content %}
+<div class="growth-container">
+    <div class="row g-4">
+        <!-- Growth Chart -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="card growth-chart-card shadow-sm border-0 h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i> {{ "Growth History & Analytics"|translate }}
+                    </h5>
+                    <div class="card-header-actions">
+                        <select class="form-select form-select-sm" id="growthChartType">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="growthTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Growth Record -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card growth-form-card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-plus-circle text-success me-2"></i> {{ "Record Growth Sampling"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('save_growth_record') }}">
+                        <div class="mb-3">
+                            <label for="growth_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="growth_pond" name="pond_id" required>
+                                <option value="">{{ "Select Pond"|translate }}</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="growth_date" class="form-label small fw-bold">{{ "Date"|translate }}</label>
+                            <input type="date" class="form-control" id="growth_date" name="date" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="growth_doc" class="form-label small fw-bold">{{ "DOC"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_doc" name="doc" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="growth_abw" class="form-label small fw-bold">{{ "ABW (g)"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_abw" name="abw" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="growth_adg" class="form-label small fw-bold">{{ "ADG (g/day)"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_adg" name="adg" step="0.01" value="0.15" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="growth_survival" class="form-label small fw-bold">{{ "Survival (%)"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_survival" name="survival" step="0.01" value="85.0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="growth_biomass" class="form-label small fw-bold">{{ "Biomass (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_biomass" name="biomass" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="growth_fcr" class="form-label small fw-bold">{{ "FCR"|translate }}</label>
+                                <input type="number" class="form-control" id="growth_fcr" name="fcr" step="0.01" value="1.2" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="growth_notes" class="form-label small fw-bold">{{ "Notes"|translate }}</label>
+                            <textarea class="form-control" id="growth_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            <i class="fas fa-save me-1"></i> {{ "Save Growth Record"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Growth Records Table -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card growth-records-card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-table text-info me-2"></i> {{ "Growth History & Analytics"|translate }}
+                    </h5>
+                    <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshGrowthRecords()" title="{{ 'Refresh'|translate }}">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="growthRecordsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Date"|translate }}</th>
+                                    <th>{{ "Pond Name"|translate }}</th>
+                                    <th>{{ "DOC"|translate }}</th>
+                                    <th>{{ "ABW (g)"|translate }}</th>
+                                    <th>{{ "ADG (g/day)"|translate }}</th>
+                                    <th>{{ "Survival (%)"|translate }}</th>
+                                    <th>{{ "Biomass (kg)"|translate }}</th>
+                                    <th>{{ "FCR"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="growthRecordsBody">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let growthChart = null;
+
+function loadGrowthRecords() {
+    fetch('/api/growth-records')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('growthRecordsBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No growth records found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.date ? new Date(record.date).toLocaleDateString() : 'N/A'}</td>
+                        <td><strong>${record.pond_name || 'N/A'}</strong></td>
+                        <td>${record.doc}</td>
+                        <td>${record.abw}g</td>
+                        <td>${record.adg}</td>
+                        <td>${record.survival}%</td>
+                        <td>${record.biomass} kg</td>
+                        <td><span class="badge bg-info">${record.fcr}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            
+            // Update chart
+            updateGrowthChart(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('growthRecordsBody').innerHTML = 
+                '<tr><td colspan="8" class="text-center text-danger">Error loading growth records</td></tr>';
+        });
+}
+
+function updateGrowthChart(data) {
+    if (typeof Chart === 'undefined') return;
+    const canvas = document.getElementById('growthTrendChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    const labels = data.map(item => item.date ? new Date(item.date).toLocaleDateString() : '').reverse();
+    const abwData = data.map(item => parseFloat(item.abw) || 0).reverse();
+    const survivalData = data.map(item => parseFloat(item.survival) || 0).reverse();
+    const fcrData = data.map(item => parseFloat(item.fcr) || 0).reverse();
+    
+    if (growthChart) {
+        growthChart.destroy();
+    }
+    
+    const chartType = document.getElementById('growthChartType') ? document.getElementById('growthChartType').value : 'line';
+    growthChart = new Chart(ctx, {
+        type: chartType,
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'ABW (g)',
+                    data: abwData,
+                    borderColor: '#0a4a5e',
+                    backgroundColor: 'rgba(10, 74, 94, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Survival (%)',
+                    data: survivalData,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'FCR',
+                    data: fcrData,
+                    borderColor: '#f39c12',
+                    backgroundColor: 'rgba(243, 156, 18, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function refreshGrowthRecords() {
+    document.getElementById('growthRecordsBody').innerHTML = 
+        '<tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>';
+    loadGrowthRecords();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chartTypeEl = document.getElementById('growthChartType');
+    if (chartTypeEl) {
+        chartTypeEl.addEventListener('change', function() {
+            loadGrowthRecords();
+        });
+    }
+    loadGrowthRecords();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Inventory"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Inventory Management"|translate }}{% endblock %}
+
+{% block content %}
+<div class="inventory-container">
+    <!-- Low Stock Alert -->
+    {% if low_stock_items %}
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <h5 class="fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> {{ "Low Stock Alert!"|translate }}</h5>
+        <p class="mb-1">The following items are below minimum quantity:</p>
+        <ul class="mb-0">
+            {% for item in low_stock_items %}
+            <li><strong>{{ item.item_name }}</strong> - Current: {{ item.current_quantity }} {{ item.unit }} (Min: {{ item.min_quantity }} {{ item.unit }})</li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    
+    <div class="row g-4">
+        <!-- Add Inventory Item -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card inventory-form-card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-plus-circle text-success me-2"></i> {{ "Add Inventory Item"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('save_inventory') }}">
+                        <div class="mb-3">
+                            <label for="inv_item_name" class="form-label small fw-bold">{{ "Item Name"|translate }}</label>
+                            <input type="text" class="form-control" id="inv_item_name" name="item_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="inv_category" class="form-label small fw-bold">{{ "Category"|translate }}</label>
+                            <select class="form-select" id="inv_category" name="category" required>
+                                <option value="">{{ "Category"|translate }}</option>
+                                <option value="Feed">Feed (దాణా)</option>
+                                <option value="Medicine">Medicine (మందులు)</option>
+                                <option value="Minerals">Minerals (ఖనిజాలు)</option>
+                                <option value="Probiotics">Probiotics (ప్రోబయోటిక్స్)</option>
+                                <option value="Lime">Lime (సున్నం)</option>
+                                <option value="Chemicals">Chemicals (రసాయనాలు)</option>
+                                <option value="Other">Other (ఇతరములు)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="inv_quantity" class="form-label small fw-bold">{{ "Quantity"|translate }}</label>
+                                <input type="number" class="form-control" id="inv_quantity" name="quantity" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="inv_unit" class="form-label small fw-bold">{{ "Unit"|translate }}</label>
+                                <input type="text" class="form-control" id="inv_unit" name="unit" placeholder="kg, L, etc." required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="inv_min_quantity" class="form-label small fw-bold">{{ "Min Quantity"|translate }}</label>
+                                <input type="number" class="form-control" id="inv_min_quantity" name="min_quantity" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="inv_current_quantity" class="form-label small fw-bold">{{ "Current Quantity"|translate }}</label>
+                                <input type="number" class="form-control" id="inv_current_quantity" name="current_quantity" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="inv_price_per_unit" class="form-label small fw-bold">{{ "Price per Unit ($)"|translate }}</label>
+                                <input type="number" class="form-control" id="inv_price_per_unit" name="price_per_unit" step="0.01">
+                            </div>
+                            <div class="col-6">
+                                <label for="inv_supplier" class="form-label small fw-bold">{{ "Supplier"|translate }}</label>
+                                <input type="text" class="form-control" id="inv_supplier" name="supplier">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="inv_expiry_date" class="form-label small fw-bold">{{ "Expiry Date"|translate }}</label>
+                            <input type="date" class="form-control" id="inv_expiry_date" name="expiry_date">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="inv_notes" class="form-label small fw-bold">{{ "Notes"|translate }}</label>
+                            <textarea class="form-control" id="inv_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            <i class="fas fa-save me-1"></i> {{ "Save"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Summary -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="card inventory-list-card shadow-sm border-0 h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-boxes text-primary me-2"></i> {{ "Inventory Items"|translate }}
+                    </h5>
+                    <div class="card-header-actions">
+                        <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshInventory()" title="{{ 'Refresh'|translate }}">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="inventoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Item Name"|translate }}</th>
+                                    <th>{{ "Category"|translate }}</th>
+                                    <th>{{ "Current Quantity"|translate }}</th>
+                                    <th>{{ "Unit"|translate }}</th>
+                                    <th>{{ "Min Quantity"|translate }}</th>
+                                    <th>{{ "Status"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadInventory() {
+    fetch('/api/inventory')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('inventoryBody');
+            const items = data.items || [];
+            
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No inventory items found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            items.forEach(item => {
+                const isLowStock = parseFloat(item.current_quantity) <= parseFloat(item.min_quantity);
+                const statusClass = isLowStock ? 'danger' : 'success';
+                const statusText = isLowStock ? 'Low Stock' : 'In Stock';
+                
+                html += `
+                    <tr>
+                        <td><strong>${item.item_name}</strong></td>
+                        <td><span class="badge bg-light text-dark border">${item.category}</span></td>
+                        <td class="fw-bold">${item.current_quantity}</td>
+                        <td>${item.unit}</td>
+                        <td class="text-muted">${item.min_quantity}</td>
+                        <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('inventoryBody').innerHTML = 
+                '<tr><td colspan="6" class="text-center text-danger">Error loading inventory</td></tr>';
+        });
+}
+
+function refreshInventory() {
+    document.getElementById('inventoryBody').innerHTML = 
+        '<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>';
+    loadInventory();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadInventory();
+});
+</script>
+{% endblock %}

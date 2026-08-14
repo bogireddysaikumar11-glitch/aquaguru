@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaGuru - Smart Shrimp & Aquaculture Farm Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0a4a5e;
+            --primary-dark: #073543;
+            --accent: #64bc46;
+            --accent-glow: rgba(100, 188, 70, 0.3);
+            --bg-light: #f8fafc;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+        /* Navbar */
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary) !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar-brand i { color: var(--accent); }
+        .btn-custom-primary {
+            background: linear-gradient(135deg, var(--primary), #0c5b73);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(10, 74, 94, 0.25);
+        }
+        .btn-custom-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(10, 74, 94, 0.35);
+            color: #fff;
+        }
+        .btn-custom-accent {
+            background: linear-gradient(135deg, var(--accent), #4ea332);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .btn-custom-accent:hover {
+            transform: translateY(-2px);
+            color: #fff;
+        }
+        /* Hero Section */
+        .hero-section {
+            padding: 100px 0 80px;
+            background: linear-gradient(180deg, #eaf4f8 0%, var(--bg-light) 100%);
+            position: relative;
+        }
+        .hero-title {
+            font-size: 3.4rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        .hero-title span {
+            color: var(--accent);
+        }
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 35px;
+            max-width: 540px;
+        }
+        .hero-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(10, 74, 94, 0.08);
+            border: 1px solid rgba(10, 74, 94, 0.05);
+        }
+        /* Feature Cards */
+        .features-section {
+            padding: 90px 0;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 650px;
+            margin: 0 auto 60px;
+        }
+        .section-header h2 {
+            font-size: 2.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+        .feature-card {
+            background: #fff;
+            padding: 35px 25px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            border: 1px solid #edf2f7;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+            border-color: rgba(10, 74, 94, 0.2);
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: 22px;
+        }
+        .feature-icon.primary { background: #e0f2fe; color: #0284c7; }
+        .feature-icon.green { background: #dcfce7; color: #16a34a; }
+        .feature-icon.amber { background: #fef3c7; color: #d97706; }
+        .feature-icon.purple { background: #f3e8ff; color: #9333ea; }
+        .feature-card h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        /* Stats Ribbon */
+        .stats-ribbon {
+            background: linear-gradient(135deg, var(--primary), #0c5b73);
+            color: white;
+            padding: 60px 0;
+            border-radius: 24px;
+            margin: 40px 0;
+        }
+        .stat-box { text-align: center; }
+        .stat-box h3 { font-size: 2.8rem; font-weight: 800; color: #64bc46; margin-bottom: 5px; }
+        .stat-box p { font-size: 1rem; opacity: 0.9; margin: 0; }
+        /* Footer */
+        footer {
+            background: #072832;
+            color: #94a3b8;
+            padding: 50px 0 25px;
+            font-size: 0.9rem;
+        }
+        footer a { color: #cbd5e1; text-decoration: none; transition: 0.2s; }
+        footer a:hover { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-fish"></i> AquaGuru
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link fw-medium" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link fw-medium" href="#calculator">Feed Calculator</a></li>
+                    <li class="nav-item"><a class="btn btn-outline-secondary px-4 rounded-pill" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-custom-accent" href="/register">Get Started Free</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <div class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill mb-3 fw-bold border">
+                        <i class="fas fa-sparkles text-warning me-1"></i> Smart Aquaculture Technology
+                    </div>
+                    <h1 class="hero-title">Intelligent Shrimp Farm Management <span>Made Simple</span></h1>
+                    <p class="hero-subtitle">
+                        Optimize feeding schedules, monitor critical water parameters, track survival & ADG, control expenses, and boost harvest profits with precision AI tools.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="/register" class="btn btn-custom-accent btn-lg px-4 py-3"><i class="fas fa-rocket me-2"></i> Start Free Trial</a>
+                        <a href="/login" class="btn btn-custom-primary btn-lg px-4 py-3"><i class="fas fa-sign-in-alt me-2"></i> Login to Dashboard</a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="hero-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-chart-pie me-2"></i> Pond Analytics</h5>
+                            <span class="badge bg-success-subtle text-success fw-bold px-3 py-1 rounded-pill">Active Season</span>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <small class="text-muted d-block">Optimal FCR</small>
+                                    <strong class="fs-4 text-primary">1.24</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <small class="text-muted d-block">Avg Survival</small>
+                                    <strong class="fs-4 text-success">88.5%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light rounded-3 mb-3 d-flex align-items-center gap-3">
+                            <i class="fas fa-check-circle text-success fs-3"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Water Quality Optimal</h6>
+                                <small class="text-muted">pH 7.8 | DO 5.4 mg/L | Temp 29°C</small>
+                            </div>
+                        </div>
+                        <a href="/login" class="btn btn-outline-primary w-100 py-2 rounded-pill fw-semibold">View Live Farm Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Everything You Need To Run A Modern Farm</h2>
+                <p class="text-muted">Built specifically for shrimp and fish pond operators to simplify daily tasks and prevent crop losses.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon primary"><i class="fas fa-calculator"></i></div>
+                        <h4>Precision Feed Calculator</h4>
+                        <p>Calculate exact daily feed amounts and feeding sessions based on biomass, DOC, ABW, and survival percentages.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon green"><i class="fas fa-flask"></i></div>
+                        <h4>Water Quality Monitoring</h4>
+                        <p>Track pH, DO, Temperature, Salinity, Ammonia, and Nitrite with instant automated alert thresholds.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon amber"><i class="fas fa-chart-line"></i></div>
+                        <h4>Growth & Sampling Logs</h4>
+                        <p>Visualize weekly ADG (Average Daily Gain), DOC milestones, and projected harvest weights dynamically.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon purple"><i class="fas fa-coins"></i></div>
+                        <h4>Expense & Inventory Tracker</h4>
+                        <p>Track feed purchases, chemicals, electricity, labor, and maintain real-time low-stock inventory warnings.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon primary"><i class="fas fa-robot"></i></div>
+                        <h4>AI Aquaculture Assistant</h4>
+                        <p>Get instant remedies for low dissolved oxygen emergencies, high ammonia spikes, white feces, and EHP diseases.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon green"><i class="fas fa-file-pdf"></i></div>
+                        <h4>Comprehensive Reports</h4>
+                        <p>Generate one-click printable summaries for harvests, batch profitability, feed conversions, and audits.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Ribbon -->
+            <div class="stats-ribbon">
+                <div class="row g-4">
+                    <div class="col-6 col-md-3 stat-box">
+                        <h3>99.9%</h3>
+                        <p>System Uptime</p>
+                    </div>
+                    <div class="col-6 col-md-3 stat-box">
+                        <h3>15-20%</h3>
+                        <p>Feed Cost Savings</p>
+                    </div>
+                    <div class="col-6 col-md-3 stat-box">
+                        <h3>24/7</h3>
+                        <p>Water Alerts</p>
+                    </div>
+                    <div class="col-6 col-md-3 stat-box">
+                        <h3>Multi-Lang</h3>
+                        <p>English & Telugu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row g-4 justify-content-between">
+                <div class="col-md-4">
+                    <h5 class="text-white fw-bold"><i class="fas fa-fish text-success me-2"></i>AquaGuru</h5>
+                    <p class="small">The complete shrimp and aquaculture farm management platform designed for efficiency and high yield.</p>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="text-white">Navigation</h6>
+                    <ul class="list-unstyled small">
+                        <li><a href="/login">Login</a></li>
+                        <li><a href="/register">Sign Up</a></li>
+                        <li><a href="/dashboard">Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="text-white">Legal</h6>
+                    <ul class="list-unstyled small">
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="border-secondary mt-4 mb-3">
+            <div class="text-center small">
+                © {{ now.year }} AquaGuru. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

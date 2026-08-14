@@ -1,0 +1,105 @@
+<!-- templates/maintenance.html -->
+{% extends "base.html" %}
+
+{% block title %}Maintenance - AquaGuru{% endblock %}
+
+{% block content %}
+<div class="maintenance-page">
+    <div class="maintenance-container text-center">
+        <div class="maintenance-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <h1>Under Maintenance</h1>
+        <p>We're currently performing scheduled maintenance to improve your experience.</p>
+        <div class="maintenance-progress">
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     style="width: 75%"></div>
+            </div>
+            <span class="progress-text">Estimated completion: 15 minutes</span>
+        </div>
+        <div class="maintenance-actions">
+            <button onclick="location.reload()" class="btn btn-primary">
+                <i class="fas fa-sync"></i> Check Status
+            </button>
+            <a href="mailto:support@aquaguru.com" class="btn btn-outline-secondary">
+                <i class="fas fa-envelope"></i> Contact Support
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.maintenance-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.maintenance-container {
+    max-width: 500px;
+    width: 100%;
+}
+
+.maintenance-icon {
+    font-size: 80px;
+    color: var(--warning-color);
+    margin-bottom: 20px;
+    animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.maintenance-container h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 10px;
+}
+
+.maintenance-container p {
+    font-size: 16px;
+    color: #6c757d;
+    margin-bottom: 30px;
+}
+
+.maintenance-progress {
+    margin: 30px 0;
+}
+
+.maintenance-progress .progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: #e9ecef;
+}
+
+.maintenance-progress .progress-bar {
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+}
+
+.progress-text {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.maintenance-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.maintenance-actions .btn {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+</style>
+{% endblock %}

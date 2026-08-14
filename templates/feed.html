@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Feed Calculator"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Feed Calculator & Records"|translate }}{% endblock %}
+
+{% block content %}
+<div class="feed-container">
+    <div class="row g-4">
+        <!-- Feed Calculator Card -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card feed-calculator-card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-calculator text-primary me-2"></i> {{ "Feed Calculator"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="feedCalculatorForm">
+                        <div class="mb-3">
+                            <label for="feed_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="feed_pond" name="pond_id" required>
+                                <option value="">{{ "Select Pond"|translate }}</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feed_doc" class="form-label small fw-bold">{{ "DOC (Days of Culture)"|translate }}</label>
+                            <input type="number" class="form-control" id="feed_doc" name="doc" placeholder="{{ 'DOC'|translate }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feed_abw" class="form-label small fw-bold">{{ "ABW (g)"|translate }}</label>
+                            <input type="number" class="form-control" id="feed_abw" name="abw" step="0.01" placeholder="{{ 'ABW'|translate }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feed_survival" class="form-label small fw-bold">{{ "Survival (%)"|translate }}</label>
+                            <input type="number" class="form-control" id="feed_survival" name="survival" step="0.01" placeholder="{{ 'Survival'|translate }} (%)" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feed_percentage" class="form-label small fw-bold">{{ "Feed %"|translate }}</label>
+                            <input type="number" class="form-control" id="feed_percentage" name="feed_percentage" step="0.1" value="4.0" required>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary w-100 py-2 fw-bold" onclick="calculateFeed()">
+                            <i class="fas fa-calculator me-1"></i> {{ "Calculate"|translate }}
+                        </button>
+                    </form>
+                    
+                    <div id="feedResults" class="feed-results mt-4 p-3 bg-light rounded-3 border" style="display: none;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <label class="fw-semibold text-muted mb-0">{{ "Biomass (kg)"|translate }}:</label>
+                            <span id="resultBiomass" class="fw-bold text-primary">0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <label class="fw-semibold text-muted mb-0">{{ "Daily Feed (kg)"|translate }}:</label>
+                            <span id="resultDailyFeed" class="fw-bold text-success">0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <label class="fw-semibold text-muted mb-0">{{ "Feed Per Session (kg)"|translate }}:</label>
+                            <span id="resultFeedPerSession" class="fw-bold text-info">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Save Feed Record Card -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card save-feed-card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-save text-success me-2"></i> {{ "Save Feed Record"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('save_feed_record') }}">
+                        <div class="mb-3">
+                            <label for="save_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="save_pond" name="pond_id" required>
+                                <option value="">{{ "Select Pond"|translate }}</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="save_date" class="form-label small fw-bold">{{ "Date"|translate }}</label>
+                            <input type="date" class="form-control" id="save_date" name="date" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="save_doc" class="form-label small fw-bold">{{ "DOC"|translate }}</label>
+                                <input type="number" class="form-control" id="save_doc" name="doc" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="save_abw" class="form-label small fw-bold">{{ "ABW (g)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_abw" name="abw" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="save_survival" class="form-label small fw-bold">{{ "Survival (%)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_survival" name="survival" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="save_feed_percentage" class="form-label small fw-bold">{{ "Feed %"|translate }}</label>
+                                <input type="number" class="form-control" id="save_feed_percentage" name="feed_percentage" step="0.1" value="4.0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="save_biomass" class="form-label small fw-bold">{{ "Biomass (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_biomass" name="biomass" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="save_daily_feed" class="form-label small fw-bold">{{ "Daily Feed (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_daily_feed" name="daily_feed" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="save_feed_per_session" class="form-label small fw-bold">{{ "Feed Per Session (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_feed_per_session" name="feed_per_session" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="save_amount" class="form-label small fw-bold">{{ "Total Amount (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="save_amount" name="amount" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="save_feed_type" class="form-label small fw-bold">{{ "Feed Type"|translate }}</label>
+                            <select class="form-select" id="save_feed_type" name="feed_type">
+                                <option value="Pellet">{{ "Pellets"|translate }}</option>
+                                <option value="Starter">{{ "Starter"|translate }}</option>
+                                <option value="Grower">{{ "Grower"|translate }}</option>
+                                <option value="Finisher">{{ "Finisher"|translate }}</option>
+                                <option value="Other">{{ "Other"|translate }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="save_notes" class="form-label small fw-bold">{{ "Notes"|translate }}</label>
+                            <textarea class="form-control" id="save_notes" name="notes" rows="2" placeholder="{{ 'Notes'|translate }}"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                            <i class="fas fa-save me-1"></i> {{ "Save Feed Record"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feed History Card -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card feed-history-card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-history text-info me-2"></i> {{ "Feed History"|translate }}
+                    </h5>
+                    <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshFeedHistory()" title="{{ 'Refresh'|translate }}">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="feedHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Date"|translate }}</th>
+                                    <th>{{ "Pond Name"|translate }}</th>
+                                    <th>{{ "DOC"|translate }}</th>
+                                    <th>{{ "Amount (kg)"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedHistoryBody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateFeed() {
+    const doc = document.getElementById('feed_doc').value;
+    const abw = document.getElementById('feed_abw').value;
+    const survival = document.getElementById('feed_survival').value;
+    const feedPercentage = document.getElementById('feed_percentage').value;
+    const pondId = document.getElementById('feed_pond').value;
+    
+    if (!doc || !abw || !survival || !feedPercentage) {
+        alert('{{ "Please fill in all fields"|translate }}');
+        return;
+    }
+    
+    fetch('/api/calculate-feed', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            doc: parseFloat(doc),
+            abw: parseFloat(abw),
+            survival: parseFloat(survival),
+            feed_percentage: parseFloat(feedPercentage),
+            pond_id: pondId ? parseInt(pondId) : null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('resultBiomass').textContent = data.biomass;
+        document.getElementById('resultDailyFeed').textContent = data.daily_feed;
+        document.getElementById('resultFeedPerSession').textContent = data.feed_per_session;
+        document.getElementById('feedResults').style.display = 'block';
+        
+        // Auto-fill save form
+        document.getElementById('save_biomass').value = data.biomass;
+        document.getElementById('save_daily_feed').value = data.daily_feed;
+        document.getElementById('save_feed_per_session').value = data.feed_per_session;
+        document.getElementById('save_doc').value = doc;
+        document.getElementById('save_abw').value = abw;
+        document.getElementById('save_survival').value = survival;
+        document.getElementById('save_feed_percentage').value = feedPercentage;
+        document.getElementById('save_amount').value = data.daily_feed;
+        if (pondId) {
+            document.getElementById('save_pond').value = pondId;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{{ "Error calculating feed. Please try again."|translate }}');
+    });
+}
+
+function loadFeedHistory() {
+    fetch('/api/feed-records')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('feedHistoryBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">{{ "No data recorded yet."|translate }}</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.date ? new Date(record.date).toLocaleDateString() : 'N/A'}</td>
+                        <td><strong>${record.pond_name || 'N/A'}</strong></td>
+                        <td>${record.doc}</td>
+                        <td class="fw-bold text-success">${record.amount} kg</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('feedHistoryBody').innerHTML = 
+                '<tr><td colspan="4" class="text-center text-danger py-3">{{ "No data recorded yet."|translate }}</td></tr>';
+        });
+}
+
+function refreshFeedHistory() {
+    document.getElementById('feedHistoryBody').innerHTML = 
+        '<tr><td colspan="4" class="text-center text-muted py-3">{{ "Loading..."|translate }}</td></tr>';
+    loadFeedHistory();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadFeedHistory();
+});
+</script>
+{% endblock %}

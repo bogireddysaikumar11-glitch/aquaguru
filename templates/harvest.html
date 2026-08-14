@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Harvest"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Harvest & Profit"|translate }}{% endblock %}
+
+{% block content %}
+<div class="harvest-container">
+    <div class="row g-4">
+        <!-- Add Harvest Record -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card harvest-form-card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-plus-circle text-success me-2"></i> {{ "Record Pond Harvest"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('save_harvest') }}">
+                        <div class="mb-3">
+                            <label for="harvest_pond" class="form-label small fw-bold">{{ "Select Pond"|translate }}</label>
+                            <select class="form-select" id="harvest_pond" name="pond_id" required>
+                                <option value="">{{ "Select Pond"|translate }}</option>
+                                {% for pond in ponds %}
+                                <option value="{{ pond.id }}">{{ pond.pond_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="harvest_date" class="form-label small fw-bold">{{ "Harvest Date"|translate }}</label>
+                            <input type="date" class="form-control" id="harvest_date" name="harvest_date" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="harvest_production" class="form-label small fw-bold">{{ "Production (kg)"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_production" name="production" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="harvest_avg_weight" class="form-label small fw-bold">{{ "Average Weight (g)"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_avg_weight" name="average_weight" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="harvest_price" class="form-label small fw-bold">{{ "Price per kg ($)"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_price" name="price" step="0.01" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="harvest_total_cost" class="form-label small fw-bold">{{ "Total Cost ($)"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_total_cost" name="total_cost" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="harvest_survival" class="form-label small fw-bold">{{ "Survival (%)"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_survival" name="survival_rate" step="0.01" value="85.0">
+                            </div>
+                            <div class="col-6">
+                                <label for="harvest_fcr" class="form-label small fw-bold">{{ "FCR"|translate }}</label>
+                                <input type="number" class="form-control" id="harvest_fcr" name="fcr" step="0.01" value="1.3">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="harvest_notes" class="form-label small fw-bold">{{ "Notes"|translate }}</label>
+                            <textarea class="form-control" id="harvest_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            <i class="fas fa-save me-1"></i> {{ "Save Harvest"|translate }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Harvest Summary -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card p-3 shadow-sm border-0 bg-white">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-success-subtle text-success rounded-circle">
+                                <i class="fas fa-dollar-sign fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="stat-value text-success mb-0">${{ "%.2f"|format(total_income) }}</h3>
+                                <p class="stat-label text-muted mb-0">{{ "Total Income"|translate }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card p-3 shadow-sm border-0 bg-white">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-primary-subtle text-primary rounded-circle">
+                                <i class="fas fa-money-bill-wave fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="stat-value text-primary mb-0">${{ "%.2f"|format(total_profit) }}</h3>
+                                <p class="stat-label text-muted mb-0">{{ "Total Profit"|translate }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card harvest-chart-card mt-3 shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-chart-bar text-primary me-2"></i> {{ "Harvest & Profit"|translate }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="harvestChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Harvest History -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card harvest-records-card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-table text-info me-2"></i> {{ "Harvest History"|translate }}
+                    </h5>
+                    <button class="btn btn-sm btn-light border rounded-circle" onclick="refreshHarvest()" title="{{ 'Refresh'|translate }}">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="harvestTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ "Date"|translate }}</th>
+                                    <th>{{ "Pond Name"|translate }}</th>
+                                    <th>{{ "Production (kg)"|translate }}</th>
+                                    <th>{{ "Average Weight (g)"|translate }}</th>
+                                    <th>{{ "Price per kg ($)"|translate }}</th>
+                                    <th>{{ "Income ($)"|translate }}</th>
+                                    <th>{{ "Profit ($)"|translate }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="harvestBody">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">{{ "Loading..."|translate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let harvestChart = null;
+
+function loadHarvestRecords() {
+    fetch('/api/harvest-records')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('harvestBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No harvest records found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.harvest_date ? new Date(record.harvest_date).toLocaleDateString() : 'N/A'}</td>
+                        <td><strong>${record.pond_name || 'N/A'}</strong></td>
+                        <td>${record.production} kg</td>
+                        <td>${record.average_weight}g</td>
+                        <td>$${parseFloat(record.price).toFixed(2)}</td>
+                        <td class="text-success fw-bold">$${parseFloat(record.income).toFixed(2)}</td>
+                        <td class="${record.profit >= 0 ? 'text-success' : 'text-danger'} fw-bold">$${parseFloat(record.profit).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            
+            // Update chart
+            updateHarvestChart(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('harvestBody').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading harvest records</td></tr>';
+        });
+}
+
+function updateHarvestChart(data) {
+    if (typeof Chart === 'undefined') return;
+    const canvas = document.getElementById('harvestChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    const labels = data.map(item => item.pond_name || 'Pond').reverse();
+    const productionData = data.map(item => parseFloat(item.production) || 0).reverse();
+    const profitData = data.map(item => parseFloat(item.profit) || 0).reverse();
+    
+    if (harvestChart) {
+        harvestChart.destroy();
+    }
+    
+    harvestChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Production (kg)',
+                    data: productionData,
+                    backgroundColor: 'rgba(10, 74, 94, 0.7)',
+                    borderColor: '#0a4a5e',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Profit ($)',
+                    data: profitData,
+                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function refreshHarvest() {
+    document.getElementById('harvestBody').innerHTML = 
+        '<tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>';
+    loadHarvestRecords();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadHarvestRecords();
+});
+</script>
+{% endblock %}

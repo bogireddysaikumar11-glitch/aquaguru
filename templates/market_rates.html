@@ -1,0 +1,541 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ "Market Price"|translate }}{% endblock %}
+
+{% block content %}
+<div class="market-rates-container">
+    
+    <!-- Top Category Tabs (Shrimp / Fish) -->
+    <div class="card shadow-sm border-0 mb-3 bg-white rounded-3">
+        <div class="card-body p-2 p-md-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                
+                <!-- Category Segment Control -->
+                <div class="nav nav-pills custom-category-pills" role="tablist">
+                    <a href="{{ url_for('market_rates', category='Shrimp', location=current_location) }}" 
+                       class="nav-link px-4 py-2 fw-bold text-center {% if current_category == 'Shrimp' %}active active-category-tab{% endif %}">
+                        <i class="fas fa-shrimp me-2"></i> {{ "Shrimp"|translate }}
+                    </a>
+                    <a href="{{ url_for('market_rates', category='Fish', location=current_location) }}" 
+                       class="nav-link px-4 py-2 fw-bold text-center {% if current_category == 'Fish' %}active active-category-tab{% endif %}">
+                        <i class="fas fa-fish me-2"></i> {{ "Fish"|translate }}
+                    </a>
+                </div>
+
+                <!-- Admin Action or Verified Badge -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Firebase Cloud Status Badge -->
+                    <div class="firebase-badge shadow-sm" id="firebaseSyncBtn" onclick="triggerFirebaseSync()" title="Click to sync data with Firebase Firestore Cloud">
+                        <span class="badge bg-success p-2 rounded-circle animate-pulse"><i class="fas fa-circle text-white" style="font-size: 0.6rem;"></i></span>
+                        <small class="fw-bold text-dark d-none d-sm-inline">{{ "Firebase Cloud"|translate }}</small>
+                    </div>
+
+                    {% if is_admin_user %}
+                    <button class="btn btn-sm btn-outline-success fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#logRateModal">
+                        <i class="fas fa-plus-circle me-1"></i> {{ "Log New Market Rate"|translate }}
+                    </button>
+                    {% else %}
+                    <span class="badge bg-light text-primary border py-2 px-3 fw-semibold">
+                        <i class="fas fa-shield-alt text-success me-1"></i> {{ "Admin Verified Live Rates"|translate }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Controls Card: Species & Location Dropdowns -->
+    <div class="card shadow-sm border-0 mb-4 bg-white rounded-3">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-center">
+                
+                <!-- Species Filter -->
+                <div class="col-md-6 col-12">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1">{{ "Species"|translate }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-dna text-primary"></i></span>
+                        <select class="form-select border-start-0 fw-semibold" id="speciesSelector" onchange="filterMarketRates()">
+                            {% for spec in species_list %}
+                            <option value="{{ spec }}" {% if current_species == spec %}selected{% endif %}>
+                                {{ spec|translate }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Location / State / Region Filter -->
+                <div class="col-md-6 col-12">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1">{{ "Market Hub"|translate }} / {{ "State"|translate }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                        <select class="form-select border-start-0 fw-semibold" id="locationSelector" onchange="filterMarketRates()">
+                            {% for loc in locations %}
+                            <option value="{{ loc }}" {% if current_location == loc %}selected{% endif %}>
+                                {{ loc|translate }}
+                            </option>
+                            {% endfor %}
+                            <option value="All" {% if current_location == 'All' %}selected{% endif %}>
+                                {{ "All Hubs"|translate }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        
+        <!-- Left: Today's Count Prices Table (Matching Reference Design) -->
+        <div class="col-lg-6 col-12">
+            <div class="card shadow-sm border-0 h-100 rounded-3 overflow-hidden bg-white">
+                <div class="card-header border-0 py-3 px-4 d-flex justify-content-between align-items-center" 
+                     style="background-color: #0b343d; color: #ffffff;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-table-list text-warning"></i>
+                        <h6 class="fw-bold mb-0 text-white">{{ "Today's Count Prices"|translate }}</h6>
+                    </div>
+                    <small class="badge bg-light text-dark fw-bold px-2 py-1">{{ latest_date }}</small>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0 count-price-table">
+                        <thead style="background-color: #0f4652; color: #ffffff;">
+                            <tr>
+                                <th class="py-3 px-4 text-white fw-bold" style="width: 35%;">
+                                    {% if current_category == 'Shrimp' %}{{ "Count"|translate }}{% else %}{{ "Species"|translate }}{% endif %}
+                                </th>
+                                <th class="py-3 px-4 text-white fw-bold text-center" style="width: 35%;">
+                                    {{ "Today's Count Prices"|translate }} (₹/kg)
+                                </th>
+                                <th class="py-3 px-3 text-white fw-bold text-end" style="width: 30%;">
+                                    {{ "Price Change"|translate }}
+                                </th>
+                                {% if is_admin_user %}
+                                <th class="py-3 px-3 text-white fw-bold text-end">{{ "Action"|translate }}</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rates %}
+                            <tr style="cursor: pointer;" onclick="populateCalculator({{ r.count_size }}, {{ r.price_per_kg }})">
+                                <td class="py-3 px-4 fw-bold text-dark">
+                                    {% if current_category == 'Shrimp' %}
+                                        <span class="badge bg-dark-subtle text-dark border px-3 py-2 fs-6 rounded-pill">
+                                            {{ r.count_size }}c
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info-subtle text-dark border px-3 py-2 fs-6 rounded-pill">
+                                            {{ r.species|translate }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="fs-5 fw-bold text-primary">₹{{ "%.0f"|format(r.price_per_kg) }}</span>
+                                </td>
+                                <td class="py-3 px-3 text-end">
+                                    {% if r.price_change > 0 %}
+                                    <span class="badge bg-success-subtle text-success border border-success fw-bold px-2 py-1">
+                                        <i class="fas fa-arrow-up me-1"></i>+₹{{ r.price_change }}
+                                    </span>
+                                    {% elif r.price_change < 0 %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger fw-bold px-2 py-1">
+                                        <i class="fas fa-arrow-down me-1"></i>-₹{{ r.price_change|abs }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted border px-2 py-1">0.00</span>
+                                    {% endif %}
+                                </td>
+                                {% if is_admin_user %}
+                                <td class="py-3 px-3 text-end" onclick="event.stopPropagation();">
+                                    <form method="POST" action="{{ url_for('delete_market_rate', rate_id=r.id) }}" style="display: inline;" onsubmit="return confirm('{{ 'Are you sure you want to delete this rate?'|translate }}')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2 rounded-circle" title="{{ 'Delete Rate'|translate }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="{% if is_admin_user %}4{% else %}3{% endif %}" class="text-center text-muted py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No market rates recorded for the selected filter.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Interactive Market Value Calculator & Price Trends -->
+        <div class="col-lg-6 col-12 d-flex flex-column gap-4">
+            
+            <!-- Interactive Market Value Calculator -->
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-header bg-white border-bottom py-3 px-4">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-calculator text-success me-2"></i> {{ "Market Value Calculator"|translate }}
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6 col-12">
+                            <label for="calc_harvest_kg" class="form-label small fw-bold text-muted">{{ "Expected Harvest (kg)"|translate }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-weight-hanging text-secondary"></i></span>
+                                <input type="number" class="form-control form-control-lg fw-bold" id="calc_harvest_kg" value="1000" step="10" oninput="runMarketCalculator()">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-12">
+                            <label for="calc_count" class="form-label small fw-bold text-muted">{{ "Count Size"|translate }}</label>
+                            <select class="form-select form-select-lg fw-bold" id="calc_count" onchange="updateCalcRateFromSelect()">
+                                {% for r in rates %}
+                                <option value="{{ r.count_size }}" data-price="{{ r.price_per_kg }}" {% if loop.first %}selected{% endif %}>
+                                    {% if current_category == 'Shrimp' %}{{ r.count_size }} Count (₹{{ "%.0f"|format(r.price_per_kg) }}/kg){% else %}{{ r.species|translate }} (₹{{ "%.0f"|format(r.price_per_kg) }}/kg){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="calc_price_kg" class="form-label small fw-bold text-muted">{{ "Price per KG"|translate }} (₹)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input type="number" class="form-control fw-bold" id="calc_price_kg" value="{% if rates %}{{ rates[0].price_per_kg }}{% else %}470{% endif %}" step="1" oninput="runMarketCalculator()">
+                        </div>
+                    </div>
+
+                    <!-- Calculated Result Banner -->
+                    <div class="mt-4 p-3 rounded-3 text-center" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 1px solid #a5d6a7;">
+                        <small class="text-muted text-uppercase fw-semibold d-block mb-1">{{ "Estimated Value"|translate }}</small>
+                        <h2 class="fw-bold text-success mb-1" id="calcTotalRevenue">₹4,70,000</h2>
+                        <small class="text-muted" id="calcBreakdownText">1,000 kg × ₹470/kg</small>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <a href="{{ url_for('harvest') }}" class="btn btn-sm btn-outline-success fw-bold">
+                            <i class="fas fa-plus-circle me-1"></i> {{ "Record Harvest"|translate }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Trend Line Chart (Chart.js) -->
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-chart-line text-primary me-2"></i> {{ "Price Trend (7-30 Days)"|translate }}
+                    </h6>
+                    <select class="form-select form-select-sm w-auto fw-semibold" id="trendCountSelect" onchange="loadTrendChartData()">
+                        {% for r in rates %}
+                        <option value="{{ r.count_size }}" {% if loop.index == 3 or loop.first %}selected{% endif %}>
+                            {{ r.count_size }}c {{ "Trend"|translate }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="card-body p-3">
+                    <div style="height: 220px; position: relative;">
+                        <canvas id="marketTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Count-Wise Rate Cards Grid -->
+    <div class="card shadow-sm border-0 rounded-3 bg-white p-3 mb-4">
+        <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-grip me-2 text-primary"></i> {{ "Count Prices"|translate }} Overview</h6>
+        <div class="row g-3">
+            {% for r in rates %}
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 col-12">
+                <div class="card h-100 shadow-sm border-0 rate-card p-3 position-relative" 
+                     style="border-left: 4px solid {% if loop.index % 3 == 1 %}#0d6efd{% elif loop.index % 3 == 2 %}#198754{% else %}#0dcaf0{% endif %} !important; cursor: pointer;"
+                     onclick="populateCalculator({{ r.count_size }}, {{ r.price_per_kg }})">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-dark px-2 py-1 rounded-pill small fw-bold">
+                            {% if current_category == 'Shrimp' %}{{ r.count_size }} {{ "Count"|translate }}{% else %}{{ r.species|translate }}{% endif %}
+                        </span>
+                        <span class="badge bg-light text-muted border small">{{ r.location|translate }}</span>
+                    </div>
+                    <div class="rate-price my-1">
+                        <span class="h3 fw-bold text-primary mb-0">₹{{ "%.0f"|format(r.price_per_kg) }}</span>
+                        <small class="text-muted"> / kg</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        <small class="text-muted">{{ "Price Change"|translate }}:</small>
+                        {% if r.price_change > 0 %}
+                        <span class="text-success small fw-bold"><i class="fas fa-arrow-up me-1"></i>+₹{{ r.price_change }}</span>
+                        {% elif r.price_change < 0 %}
+                        <span class="text-danger small fw-bold"><i class="fas fa-arrow-down me-1"></i>-₹{{ r.price_change|abs }}</span>
+                        {% else %}
+                        <span class="text-muted small">0.00</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if is_admin_user %}
+<!-- ==================== LOG / UPDATE RATE MODAL (ADMIN ONLY) ==================== -->
+<div class="modal fade" id="logRateModal" tabindex="-1" aria-labelledby="logRateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title fw-bold" id="logRateModalLabel">
+                    <i class="fas fa-plus-circle text-success me-2"></i> {{ "Log New Market Rate"|translate }} <span class="badge bg-warning text-dark ms-2 small">{{ "Admin Only"|translate }}</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('save_market_rate') }}">
+                <div class="modal-body p-4">
+                    
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label for="rate_category" class="form-label small fw-bold">{{ "Category"|translate }}</label>
+                        <select class="form-select" id="rate_category" name="category" onchange="updateSpeciesModalOptions()" required>
+                            <option value="Shrimp" {% if current_category == 'Shrimp' %}selected{% endif %}>{{ "Shrimp"|translate }}</option>
+                            <option value="Fish" {% if current_category == 'Fish' %}selected{% endif %}>{{ "Fish"|translate }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Market Location -->
+                    <div class="mb-3">
+                        <label for="rate_location" class="form-label small fw-bold">{{ "Market Hub"|translate }} / {{ "State"|translate }}</label>
+                        <select class="form-select" id="rate_location" name="location" required>
+                            {% for loc in locations %}
+                            {% if loc != 'All' %}
+                            <option value="{{ loc }}">{{ loc|translate }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Species & Count -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="rate_species" class="form-label small fw-bold">{{ "Species"|translate }}</label>
+                            <select class="form-select" id="rate_species" name="species" required>
+                                <option value="Vannamei">Vannamei</option>
+                                <option value="Black Tiger">Black Tiger</option>
+                                <option value="Rohu">Rohu</option>
+                                <option value="Catla">Catla</option>
+                                <option value="Tilapia">Tilapia</option>
+                                <option value="Pangasius">Pangasius</option>
+                                <option value="Sea Bass">Sea Bass</option>
+                                <option value="Murrel">Murrel</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="rate_count" class="form-label small fw-bold">{{ "Count Size"|translate }}</label>
+                            <select class="form-select" id="rate_count" name="count_size" required>
+                                <option value="20">20 Count (20c)</option>
+                                <option value="25">25 Count (25c)</option>
+                                <option value="30">30 Count (30c)</option>
+                                <option value="40">40 Count (40c)</option>
+                                <option value="45">45 Count (45c)</option>
+                                <option value="50">50 Count (50c)</option>
+                                <option value="60">60 Count (60c)</option>
+                                <option value="70">70 Count (70c)</option>
+                                <option value="80">80 Count (80c)</option>
+                                <option value="90">90 Count (90c)</option>
+                                <option value="100">100 Count (100c)</option>
+                                <option value="1">1 (Standard Fish)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Price & Change -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="rate_price" class="form-label small fw-bold">{{ "Price per KG"|translate }} (₹)</label>
+                            <input type="number" class="form-control" id="rate_price" name="price_per_kg" step="0.5" placeholder="e.g. 470" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="rate_change" class="form-label small fw-bold">{{ "Price Change"|translate }} (₹)</label>
+                            <input type="number" class="form-control" id="rate_change" name="price_change" step="0.5" value="0.0">
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label for="rate_date" class="form-label small fw-bold">{{ "Date"|translate }}</label>
+                        <input type="date" class="form-control" id="rate_date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ "Cancel"|translate }}</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4"><i class="fas fa-save me-1"></i> {{ "Save Rate"|translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+let marketTrendChart = null;
+
+function filterMarketRates() {
+    const spec = document.getElementById('speciesSelector').value;
+    const loc = document.getElementById('locationSelector').value;
+    const category = '{{ current_category }}';
+    window.location.href = `/market-rates?category=${category}&species=${encodeURIComponent(spec)}&location=${encodeURIComponent(loc)}`;
+}
+
+function runMarketCalculator() {
+    const harvestKg = parseFloat(document.getElementById('calc_harvest_kg').value) || 0;
+    const priceKg = parseFloat(document.getElementById('calc_price_kg').value) || 0;
+    const total = harvestKg * priceKg;
+
+    document.getElementById('calcTotalRevenue').textContent = '₹' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    document.getElementById('calcBreakdownText').textContent = `${harvestKg.toLocaleString()} kg × ₹${priceKg}/kg`;
+}
+
+function updateCalcRateFromSelect() {
+    const select = document.getElementById('calc_count');
+    const selectedOpt = select.options[select.selectedIndex];
+    if (selectedOpt) {
+        const price = selectedOpt.getAttribute('data-price');
+        if (price) {
+            document.getElementById('calc_price_kg').value = price;
+            runMarketCalculator();
+        }
+    }
+}
+
+function populateCalculator(count, price) {
+    const calcCountSelect = document.getElementById('calc_count');
+    if (calcCountSelect) {
+        calcCountSelect.value = count;
+    }
+    document.getElementById('calc_price_kg').value = price;
+    runMarketCalculator();
+    document.getElementById('calc_harvest_kg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function loadTrendChartData() {
+    const trendSelect = document.getElementById('trendCountSelect');
+    const countVal = trendSelect ? trendSelect.value : 30;
+    const currentLoc = '{{ current_location if current_location != "All" else "Andhra Pradesh" }}';
+    const category = '{{ current_category }}';
+    const species = '{{ current_species }}';
+
+    fetch(`/api/market-rates/history?category=${category}&species=${encodeURIComponent(species)}&count=${countVal}&location=${encodeURIComponent(currentLoc)}`)
+        .then(r => r.json())
+        .then(data => {
+            const chartCanvas = document.getElementById('marketTrendChart');
+            if (!chartCanvas) return;
+            const ctx = chartCanvas.getContext('2d');
+            if (marketTrendChart) {
+                marketTrendChart.destroy();
+            }
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+            gradient.addColorStop(0, 'rgba(13, 110, 253, 0.35)');
+            gradient.addColorStop(1, 'rgba(13, 110, 253, 0.0)');
+
+            marketTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates || [],
+                    datasets: [{
+                        label: `${data.count || countVal}c ${category} Price (₹/kg)`,
+                        data: data.prices || [],
+                        borderColor: '#0d6efd',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0d6efd',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ₹${context.parsed.y} / kg`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: {
+                                callback: function(value) { return '₹' + value; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => console.error('Error loading trend chart:', err));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('rate_date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    runMarketCalculator();
+    loadTrendChartData();
+});
+</script>
+
+<style>
+.custom-category-pills .nav-link {
+    color: #4a5568;
+    border-radius: 8px;
+    margin-right: 8px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+.custom-category-pills .nav-link.active-category-tab {
+    background-color: #0b343d !important;
+    color: #ffffff !important;
+    border-color: #0b343d !important;
+    box-shadow: 0 4px 12px rgba(11, 52, 61, 0.25);
+}
+.count-price-table th, .count-price-table td {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+.rate-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    background: #fff;
+}
+.rate-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+}
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+</style>
+{% endblock %}

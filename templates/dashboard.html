@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Dashboard"|translate }} - AquaGuru{% endblock %}
+{% block page_title %}{{ "Dashboard"|translate }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* MOBILE APP THEME CSS */
+    body { background-color: #f4f7f9; }
+    
+    /* Top Header Sub-Banner */
+    .app-header {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border: 1px solid #edf2f7;
+    }
+    .app-header h4 { font-weight: 700; color: #0a4a5e; margin: 0; }
+
+    /* Cards */
+    .mobile-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid #edf2f7;
+        margin-bottom: 15px;
+    }
+    .stat-value { font-size: 2.2rem; font-weight: 700; color: #0a4a5e; line-height: 1; }
+    .stat-label { color: #718096; font-size: 0.9rem; margin-top: 5px; font-weight: 500; }
+    .badge-status { background: #e6fffa; color: #319795; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; }
+
+    /* Quick Actions Grid */
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .quick-item {
+        background: white; border-radius: 14px; padding: 16px 8px; text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #edf2f7;
+        text-decoration: none; color: #4a5568; transition: 0.2s; font-weight: 600; font-size: 0.85rem;
+    }
+    .quick-item:hover { transform: translateY(-3px); color: #0a4a5e; border-color: #0c5b73; box-shadow: 0 4px 12px rgba(10, 74, 94, 0.1); }
+    .quick-item i { font-size: 1.6rem; color: #0c5b73; display: block; margin-bottom: 6px; }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: white; padding: 10px 0 15px 0;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+        display: flex; justify-content: space-around; align-items: center;
+        z-index: 1000;
+        border-radius: 25px 25px 0 0;
+        max-width: 500px; margin: 0 auto;
+    }
+    .bottom-nav .nav-item {
+        display: flex; flex-direction: column; align-items: center;
+        font-size: 0.75rem; color: #a0aec0; text-decoration: none; transition: 0.2s; font-weight: 500;
+    }
+    .bottom-nav .nav-item i { font-size: 1.3rem; margin-bottom: 2px; }
+    .bottom-nav .nav-item.active { color: #0a4a5e; font-weight: 700; }
+    .bottom-nav .nav-item.active i { color: #0c5b73; }
+    
+    /* Bottom nav FAB Button */
+    .fab-btn {
+        background: #0c5b73; color: white; width: 48px; height: 48px;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; box-shadow: 0 4px 10px rgba(12, 91, 115, 0.4);
+        margin-top: -20px; text-decoration: none;
+    }
+    .fab-btn:hover { color: white; background: #083e52; transform: scale(1.05); }
+    .main-content { padding-bottom: 90px !important; } /* Make room for bottom nav */
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- APP SUB-HEADER -->
+    <div class="app-header">
+        <div>
+            <h4>{{ "Dashboard"|translate }}</h4>
+            <small class="text-muted">{{ "Welcome back"|translate }}, <strong>{{ session.get('username', 'Farmer') }}</strong></small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/notifications" class="btn btn-light btn-sm rounded-circle p-2 text-primary position-relative" title="{{ 'Notifications'|translate }}">
+                <i class="fas fa-bell"></i>
+                {% if stats.notifications and stats.notifications > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                    {{ stats.notifications }}
+                </span>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <div class="mobile-card">
+                <p class="stat-label mb-1">{{ "Total Ponds"|translate }}</p>
+                <div class="stat-value">{{ stats.total_ponds or 0 }}</div>
+                <span class="badge-status mt-2 d-inline-block">+{{ stats.active_ponds or 0 }} {{ "Active"|translate }}</span>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="mobile-card">
+                <p class="stat-label mb-1">{{ "Total Feed Used"|translate }}</p>
+                <div class="stat-value">{{ stats.total_feed|round(1) if stats.total_feed else 0 }} <small style="font-size: 1rem;">kg</small></div>
+                <span class="badge-status mt-2 d-inline-block"><i class="fas fa-calendar-day me-1"></i> {{ "Today"|translate }}: {{ stats.today_feed or 0 }} kg</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="mobile-card">
+                <p class="stat-label mb-1">{{ "Current DOC"|translate }}</p>
+                <div class="stat-value">{{ stats.current_doc or 0 }} <small style="font-size: 1rem;">{{ "Days"|translate }}</small></div>
+                <span class="badge-status mt-2 d-inline-block">{{ "Avg ABW"|translate }}: {{ stats.avg_abw or 0 }}g</span>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="mobile-card">
+                <p class="stat-label mb-1">{{ "Water Quality Status"|translate }}</p>
+                <div class="stat-value" style="font-size: 1.4rem;">{{ stats.water_status|translate }}</div>
+                <span class="badge-status mt-2 d-inline-block">{{ "Survival"|translate }}: {{ stats.survival or 0 }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SHRIMP MARKET RATES WIDGET -->
+    <div class="mobile-card bg-white border-0 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success p-1 rounded-circle" style="width: 10px; height: 10px; display: inline-block;"></span>
+                <h6 class="fw-bold mb-0 text-dark">{{ "Live Shrimp Market Rates"|translate }}</h6>
+            </div>
+            <a href="/market-rates" class="small fw-semibold text-primary text-decoration-none">
+                {{ "View All Market Rates"|translate }} <i class="fas fa-chevron-right ms-1 small"></i>
+            </a>
+        </div>
+
+        <div class="row g-2 mt-1">
+            {% for r in today_rates[:4] %}
+            <div class="col-6 col-md-3">
+                <div class="p-2 border rounded-3 text-center bg-light">
+                    <small class="text-muted fw-bold d-block">{{ r.count_size }} {{ "Count"|translate }}</small>
+                    <span class="fw-bold text-primary h6 mb-0 d-block">₹{{ "%.0f"|format(r.price_per_kg) }}<small class="text-muted fw-normal" style="font-size: 0.75rem;">/kg</small></span>
+                    {% if r.price_change > 0 %}
+                    <small class="text-success fw-bold" style="font-size: 0.7rem;"><i class="fas fa-arrow-up"></i> +₹{{ r.price_change }}</small>
+                    {% elif r.price_change < 0 %}
+                    <small class="text-danger fw-bold" style="font-size: 0.7rem;"><i class="fas fa-arrow-down"></i> -₹{{ r.price_change|abs }}</small>
+                    {% else %}
+                    <small class="text-muted" style="font-size: 0.7rem;">Stable</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-2">
+                <small class="text-muted">{{ "No data recorded yet."|translate }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS GRID -->
+    <h6 class="fw-bold mb-2 text-muted text-uppercase small">{{ "Quick Actions"|translate }}</h6>
+    <div class="quick-grid">
+        <a href="/feed" class="quick-item"><i class="fas fa-seedling"></i> {{ "Feed"|translate }}</a>
+        <a href="/water-quality" class="quick-item"><i class="fas fa-flask"></i> {{ "Water"|translate }}</a>
+        <a href="/market-rates" class="quick-item"><i class="fas fa-chart-line"></i> {{ "Market Rates"|translate }}</a>
+        <a href="/expenses" class="quick-item"><i class="fas fa-coins"></i> {{ "Expense"|translate }}</a>
+    </div>
+
+    <!-- BOTTOM BANNER -->
+    <div class="mobile-card text-center bg-white border-0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h6 class="fw-bold mb-0">{{ "Recent Activity"|translate }}</h6>
+                <small class="text-muted">({{ "Last 5 Growth Records"|translate }})</small>
+            </div>
+        </div>
+        {% if growth_data %}
+            <div class="table-responsive mt-2">
+                <table class="table table-sm table-borderless mb-0 text-start">
+                    <thead>
+                        <tr class="text-muted border-bottom">
+                            <th class="ps-0">{{ "Date"|translate }}</th>
+                            <th>{{ "DOC"|translate }}</th>
+                            <th>{{ "ABW"|translate }}</th>
+                            <th>{{ "Survival"|translate }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in growth_data[-5:] %}
+                        <tr>
+                            <td class="ps-0 small">{{ record.date }}</td>
+                            <td class="small">{{ record.doc }}</td>
+                            <td class="small">{{ record.abw }}g</td>
+                            <td class="small">{{ record.survival }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0 mt-2">{{ "No data recorded yet."|translate }}</p>
+        {% endif %}
+    </div>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav">
+        <a href="/dashboard" class="nav-item active"><i class="fas fa-home"></i> {{ "Home"|translate }}</a>
+        <a href="/ponds" class="nav-item"><i class="fas fa-water"></i> {{ "Ponds"|translate }}</a>
+        
+        <!-- FAB Button (Add New Feed) -->
+        <a href="/feed" class="fab-btn shadow" title="{{ 'Add Feed Record'|translate }}"><i class="fas fa-plus"></i></a>
+        
+        <a href="/notifications" class="nav-item"><i class="fas fa-bell"></i> {{ "Alerts"|translate }}</a>
+        <a href="/profile" class="nav-item"><i class="fas fa-user"></i> {{ "Profile"|translate }}</a>
+    </nav>
+{% endblock %}
