@@ -99,7 +99,7 @@
                     <small class="badge bg-light text-dark fw-bold px-2 py-1">{{ latest_date }}</small>
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive table-responsive-watermark">
                     <table class="table table-hover table-striped align-middle mb-0 count-price-table">
                         <thead style="background-color: #0f4652; color: #ffffff;">
                             <tr>
@@ -519,6 +519,23 @@ document.addEventListener('DOMContentLoaded', function() {
 .count-price-table th, .count-price-table td {
     padding-top: 14px;
     padding-bottom: 14px;
+}
+.table-responsive-watermark {
+    position: relative;
+}
+.table-responsive-watermark::after {
+    content: '';
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    background: url('/static/logo.png') no-repeat center center;
+    background-size: contain;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 1;
 }
 .rate-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;

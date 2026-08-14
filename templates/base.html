@@ -39,13 +39,49 @@
         .sidebar .nav-link i { width: 24px; text-align: center; }
         .sidebar-footer { flex-shrink: 0; border-top: 1px solid #2d3748; padding: 15px 0; background: #1a1f36; }
 
-        /* --- MAIN CONTENT --- */
-        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; }
+        /* --- MAIN CONTENT & WATERMARK --- */
+        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; position: relative; }
+        
+        .page-center-watermark {
+            position: fixed;
+            top: 55%;
+            left: calc(50% + 125px);
+            transform: translate(-50%, -50%);
+            width: min(460px, 65vw);
+            max-width: 480px;
+            opacity: 0.055;
+            pointer-events: none;
+            z-index: 0;
+            user-select: none;
+            filter: contrast(110%);
+        }
+        .page-center-watermark img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .brand-middle-container {
+            position: relative;
+            z-index: 2;
+        }
+        .brand-middle-logo {
+            height: 105px;
+            width: auto;
+            max-width: 130px;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 16px rgba(0,0,0,0.08));
+            transition: transform 0.3s ease;
+        }
+        .brand-middle-logo:hover {
+            transform: scale(1.05);
+        }
 
         /* --- TOP HEADER --- */
         .top-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
+            position: relative; z-index: 2;
         }
         .user-profile {
             background: #fff; padding: 8px 15px; border-radius: 50px;
@@ -97,6 +133,7 @@
             .sidebar { transform: translateX(-100%); width: 280px; }
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; padding: 20px; }
+            .page-center-watermark { left: 50%; width: min(340px, 80vw); opacity: 0.045; }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -105,7 +142,10 @@
 
     <!-- ==================== SIDEBAR ==================== -->
     <nav class="sidebar" id="sidebar">
-        <div class="sidebar-brand"><i class="fas fa-fish"></i> AquaGuru</div>
+        <div class="sidebar-brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru" style="height: 36px; width: 36px; object-fit: contain; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+            <span>AquaGuru</span>
+        </div>
         <div class="sidebar-nav-container">
             <div class="px-3 mb-2 text-uppercase text-muted small fw-bold">{{ "Main Menu"|translate }}</div>
             <ul class="nav flex-column">
@@ -134,6 +174,11 @@
     <!-- ==================== MAIN CONTENT ==================== -->
     <div class="main-content">
         
+        <!-- Central Background Watermark across all pages (Matching Reference Design) -->
+        <div class="page-center-watermark" aria-hidden="true">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru Watermark Logo">
+        </div>
+        
         <!-- TOP HEADER (FIREBASE STATUS, LANGUAGE SWITCHER & USER INFO) -->
         <div class="top-header">
             <div>
@@ -147,7 +192,6 @@
                     <span id="firebaseStatusText">Firebase Cloud</span>
                 </div>
 
-                <!-- Instant Language Dropdown Switcher -->
                 <!-- Instant Language Dropdown Switcher -->
                 <div class="dropdown">
                     <button class="btn lang-btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -193,7 +237,18 @@
             {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        <!-- Main Page Content Block -->
+        <div class="page-content-wrapper" style="position: relative; z-index: 2;">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Centered Brand Emblem (Matching Reference Design Across All Pages) -->
+        <div class="text-center my-4 py-3 brand-middle-container" aria-label="AquaGuru Brand">
+            <div class="d-inline-flex flex-column align-items-center">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru Official Emblem" class="brand-middle-logo mb-2">
+                <small class="text-muted fw-bold" style="letter-spacing: 0.5px;">ఆక్వాగురు · మీ గెలుపు .. మీ అభివృద్ధి</small>
+            </div>
+        </div>
     </div>
 
     <!-- ==================== SCRIPTS & SDKS ==================== -->
