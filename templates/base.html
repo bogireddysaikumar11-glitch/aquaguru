@@ -2,54 +2,242 @@
 <html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaGuru - {% block title %}{{ "Dashboard"|translate }}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AquaGuru - {% block page_title %}{{ "Dashboard"|translate }}{% endblock %}</title>
     
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b343d">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AquaGuru">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+
     <!-- Preconnect CDNs for fast loading -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* --- GLOBAL STYLES --- */
-        body { background-color: #f4f6f9; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            height: 100vh; width: 250px; background: #1a1f36; color: #a0aec0;
-            position: fixed; top: 0; left: 0; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease-in-out; display: flex; flex-direction: column;
+        /* ==================== ROOT & MOBILE FIRST VARIABLES ==================== */
+        :root {
+            --app-primary: #0b343d;
+            --app-primary-dark: #07232a;
+            --app-accent: #198754;
+            --app-berry: #b81b4c;
+            --app-bg: #f4f6f9;
+            --bottom-nav-height: 64px;
+            --top-bar-height: 58px;
         }
-        .sidebar-brand { flex-shrink: 0; color: #fff; font-size: 1.25rem; font-weight: 600; padding: 20px 20px; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 10px; }
-        .sidebar-brand i { color: #48bb78; }
-        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding: 10px 0; }
+
+        /* --- GLOBAL NATIVE TOUCH DEFAULTS --- */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--app-bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ==================== MOBILE TOP APP BAR ==================== */
+        .mobile-app-bar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--top-bar-height);
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 1040;
+            padding: 0 16px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .mobile-bar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--app-primary);
+        }
+        .mobile-bar-brand img {
+            height: 34px;
+            width: 34px;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .mobile-bar-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            max-width: 170px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ==================== MOBILE BOTTOM TAB NAVIGATION (MATCHING SCREENSHOT) ==================== */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--bottom-nav-height);
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            z-index: 1040;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .mobile-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .mobile-nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 2px;
+            transition: transform 0.2s ease;
+        }
+        .mobile-nav-item.active {
+            color: var(--app-primary);
+        }
+        .mobile-nav-item.active i {
+            transform: scale(1.12);
+        }
+
+        /* Center Highlighted Action (Market Price Circle Button) */
+        .mobile-nav-item.center-action {
+            color: #64748b;
+        }
+        .mobile-nav-item.center-action .action-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 2px solid #ffffff;
+            transition: all 0.2s ease;
+        }
+        .mobile-nav-item.center-action.active .action-circle {
+            background: var(--app-berry);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(184, 27, 76, 0.35);
+            transform: scale(1.08);
+        }
+        .mobile-nav-item.center-action .action-circle i {
+            font-size: 1.15rem;
+            margin: 0;
+        }
+
+        /* ==================== DESKTOP SIDEBAR ==================== */
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            background: #1a1f36;
+            color: #a0aec0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1050;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-brand {
+            flex-shrink: 0;
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 600;
+            padding: 20px 20px;
+            border-bottom: 1px solid #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-nav-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
         .sidebar-nav-container::-webkit-scrollbar { width: 5px; }
         .sidebar-nav-container::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
-        .sidebar .nav-link { color: #a0aec0; padding: 12px 20px; margin: 5px 10px; border-radius: 8px; transition: all 0.2s; font-weight: 500; display: flex; align-items: center; gap: 12px; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background-color: #2d3748; transform: translateX(5px); }
+        .sidebar .nav-link {
+            color: #a0aec0;
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #fff;
+            background-color: #2d3748;
+            transform: translateX(5px);
+        }
         .sidebar .nav-link i { width: 24px; text-align: center; }
         .sidebar-footer { flex-shrink: 0; border-top: 1px solid #2d3748; padding: 15px 0; background: #1a1f36; }
 
-        /* --- MAIN CONTENT & WATERMARK --- */
-        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; position: relative; }
+        /* ==================== MAIN CONTENT & WATERMARKS ==================== */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            position: relative;
+        }
         
         .page-center-watermark {
             position: fixed;
             top: 55%;
             left: calc(50% + 125px);
             transform: translate(-50%, -50%);
-            width: min(460px, 65vw);
-            max-width: 480px;
-            opacity: 0.055;
+            width: min(440px, 65vw);
+            max-width: 460px;
+            opacity: 0.05;
             pointer-events: none;
             z-index: 0;
             user-select: none;
@@ -66,26 +254,36 @@
             z-index: 2;
         }
         .brand-middle-logo {
-            height: 105px;
+            height: 95px;
             width: auto;
-            max-width: 130px;
+            max-width: 120px;
             object-fit: contain;
-            filter: drop-shadow(0 6px 16px rgba(0,0,0,0.08));
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,0.06));
             transition: transform 0.3s ease;
         }
         .brand-middle-logo:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
         }
 
-        /* --- TOP HEADER --- */
-        .top-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
-            position: relative; z-index: 2;
+        /* --- DESKTOP TOP HEADER --- */
+        .desktop-top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 26px;
+            flex-wrap: wrap;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
         }
         .user-profile {
-            background: #fff; padding: 8px 15px; border-radius: 50px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;
+            background: #fff;
+            padding: 8px 15px;
+            border-radius: 50px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .lang-btn {
@@ -128,19 +326,100 @@
             color: #e65100;
         }
 
-        /* --- RESPONSIVE MOBILE --- */
-        @media (max-width: 991px) {
-            .sidebar { transform: translateX(-100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 20px; }
-            .page-center-watermark { left: 50%; width: min(340px, 80vw); opacity: 0.045; }
+        /* ==================== MOBILE DRAWER OFFCANVAS ==================== */
+        .mobile-drawer {
+            width: 300px;
+            background: #111827;
+            color: #e2e8f0;
+        }
+        .mobile-drawer .offcanvas-header {
+            background: #0b343d;
+            color: #fff;
+            border-bottom: 1px solid #1f2937;
+            padding: 20px 18px;
+        }
+        .mobile-drawer .nav-link {
+            color: #9ca3af;
+            padding: 13px 18px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            margin: 3px 10px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s ease;
+        }
+        .mobile-drawer .nav-link:hover, .mobile-drawer .nav-link.active {
+            color: #ffffff;
+            background: #1f2937;
+            transform: translateX(4px);
+        }
+        .mobile-drawer .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* ==================== MOBILE RESPONSIVE ADAPTATIONS ==================== */
+        @media (max-width: 991.98px) {
+            .sidebar { display: none !important; }
+            .desktop-top-header { display: none !important; }
+            .mobile-app-bar { display: flex !important; }
+            .mobile-bottom-nav { display: flex !important; }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 16px 14px !important;
+                padding-top: calc(var(--top-bar-height) + 14px) !important;
+                padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px) !important;
+            }
+            .page-center-watermark {
+                left: 50% !important;
+                width: min(320px, 80vw) !important;
+                opacity: 0.045 !important;
+            }
+            .brand-middle-logo {
+                height: 80px;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <!-- ==================== SIDEBAR ==================== -->
+    <!-- ==================== MOBILE TOP APP BAR ==================== -->
+    <header class="mobile-app-bar">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-light border-0 p-2 text-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileDrawer" aria-label="Open Menu">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a href="/dashboard" class="mobile-bar-brand">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru">
+                <h1 class="mobile-bar-title">{% block mobile_title %}{{ "AquaGuru"|translate }}{% endblock %}</h1>
+            </a>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Mobile Instant Language Switcher -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-light border rounded-pill px-2 py-1 fw-bold text-dark" type="button" id="mobileLangDrop" data-bs-toggle="dropdown">
+                    <i class="fas fa-globe text-success"></i>
+                    <span>{% if session.get('lang') == 'te' %}తె{% else %}EN{% endif %}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-1" aria-labelledby="mobileLangDrop">
+                    <li><a class="dropdown-item py-2 fw-semibold {% if session.get('lang') != 'te' %}text-primary active{% endif %}" href="javascript:void(0);" onclick="setAquaLanguage('en')">🇬🇧 English</a></li>
+                    <li><a class="dropdown-item py-2 fw-semibold {% if session.get('lang') == 'te' %}text-primary active{% endif %}" href="javascript:void(0);" onclick="setAquaLanguage('te')">🇮🇳 తెలుగు (Telugu)</a></li>
+                </ul>
+            </div>
+
+            <!-- Firebase Cloud Sync Icon -->
+            <button class="btn btn-sm btn-light border rounded-circle p-2" onclick="triggerFirebaseSync()" title="Firebase Cloud Sync">
+                <i class="fas fa-fire text-warning"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== DESKTOP SIDEBAR ==================== -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru" style="height: 36px; width: 36px; object-fit: contain; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
@@ -171,18 +450,55 @@
         </div>
     </nav>
 
+    <!-- ==================== MOBILE SLIDE-OUT DRAWER ==================== -->
+    <div class="offcanvas offcanvas-start mobile-drawer border-0" tabindex="-1" id="mobileDrawer">
+        <div class="offcanvas-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru" style="height: 40px; width: 40px; border-radius: 50%; background: #fff; padding: 2px;">
+                <div>
+                    <h6 class="mb-0 fw-bold text-white">AquaGuru</h6>
+                    <small class="text-white-50">{{ session.get('username', 'Farmer') }}</small>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-2 d-flex flex-column justify-content-between">
+            <ul class="nav flex-column mb-auto">
+                <li class="nav-item"><a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard"><i class="fas fa-th-large text-primary"></i> {{ "Dashboard"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/market-rates' %}active{% endif %}" href="/market-rates"><i class="fas fa-indian-rupee-sign text-danger"></i> {{ "Market Rates"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/ponds' %}active{% endif %}" href="/ponds"><i class="fas fa-water text-info"></i> {{ "Ponds"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/feed' %}active{% endif %}" href="/feed"><i class="fas fa-seedling text-success"></i> {{ "Feed Calculator"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/water-quality' %}active{% endif %}" href="/water-quality"><i class="fas fa-flask text-warning"></i> {{ "Water Quality"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/growth' %}active{% endif %}" href="/growth"><i class="fas fa-chart-line text-info"></i> {{ "Growth"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/expenses' %}active{% endif %}" href="/expenses"><i class="fas fa-coins text-warning"></i> {{ "Expenses"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/inventory' %}active{% endif %}" href="/inventory"><i class="fas fa-boxes text-secondary"></i> {{ "Inventory"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/harvest' %}active{% endif %}" href="/harvest"><i class="fas fa-tractor text-success"></i> {{ "Harvest"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/ai-assistant' %}active{% endif %}" href="/ai-assistant"><i class="fas fa-robot text-primary"></i> {{ "AI Assistant"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/reports' %}active{% endif %}" href="/reports"><i class="fas fa-file-alt text-light"></i> {{ "Reports"|translate }}</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/notifications' %}active{% endif %}" href="/notifications"><i class="fas fa-bell text-warning"></i> {{ "Notifications"|translate }}</a></li>
+            </ul>
+
+            <div class="pt-3 border-top border-secondary">
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="/profile"><i class="fas fa-user-circle"></i> {{ "Profile"|translate }}</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> {{ "Logout"|translate }}</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MAIN CONTENT ==================== -->
-    <div class="main-content">
+    <main class="main-content">
         
-        <!-- Central Background Watermark across all pages (Matching Reference Design) -->
+        <!-- Central Background Watermark across all pages -->
         <div class="page-center-watermark" aria-hidden="true">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="AquaGuru Watermark Logo">
         </div>
         
-        <!-- TOP HEADER (FIREBASE STATUS, LANGUAGE SWITCHER & USER INFO) -->
-        <div class="top-header">
+        <!-- DESKTOP TOP HEADER -->
+        <div class="desktop-top-header">
             <div>
-                <h3 class="fw-bold mb-0">{% block page_title %}{{ "Dashboard"|translate }}{% endblock %}</h3>
+                <h3 class="fw-bold mb-0">{% block page_heading %}{{ "Dashboard"|translate }}{% endblock %}</h3>
             </div>
             
             <div class="d-flex align-items-center gap-3">
@@ -220,7 +536,6 @@
                 <div class="user-profile">
                     <i class="fas fa-user-circle fa-lg text-primary"></i>
                     <span class="fw-bold">{{ session.get('username', 'Farmer') }}</span>
-                    <button class="btn btn-outline-secondary d-lg-none ms-2" id="sidebarToggle"><i class="fas fa-bars"></i></button>
                 </div>
             </div>
         </div>
@@ -229,7 +544,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show mb-4">
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show mb-3 shadow-sm rounded-3">
                         {{ message|translate }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
@@ -249,7 +564,43 @@
                 <small class="text-muted fw-bold" style="letter-spacing: 0.5px;">ఆక్వాగురు · మీ గెలుపు .. మీ అభివృద్ధి</small>
             </div>
         </div>
-    </div>
+    </main>
+
+    <!-- ==================== MOBILE BOTTOM TAB NAVIGATION (MATCHING 2ND SCREENSHOT) ==================== -->
+    <nav class="mobile-bottom-nav">
+        <!-- 1. Home / Dashboard -->
+        <a href="/dashboard" class="mobile-nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+            <i class="fas fa-house"></i>
+            <span>{{ "Home"|translate }}</span>
+        </a>
+
+        <!-- 2. Market Rates (Special Center Pill Icon Matching Screenshot) -->
+        <a href="/market-rates" class="mobile-nav-item center-action {% if request.path == '/market-rates' %}active{% endif %}">
+            <div class="action-circle">
+                <i class="fas fa-indian-rupee-sign"></i>
+            </div>
+            <span>{{ "Market"|translate }}</span>
+        </a>
+
+        <!-- 3. Feed Calculator -->
+        <a href="/feed" class="mobile-nav-item {% if request.path == '/feed' %}active{% endif %}">
+            <i class="fas fa-bowl-rice"></i>
+            <span>{{ "Feed"|translate }}</span>
+        </a>
+
+        <!-- 4. Water Quality -->
+        <a href="/water-quality" class="mobile-nav-item {% if request.path == '/water-quality' %}active{% endif %}">
+            <i class="fas fa-flask"></i>
+            <span>{{ "Water"|translate }}</span>
+        </a>
+
+        <!-- 5. More App Drawer -->
+        <a href="javascript:void(0);" class="mobile-nav-item" data-bs-toggle="offcanvas" data-bs-target="#mobileDrawer">
+            <i class="fas fa-grid-2 text-secondary"></i>
+            <i class="fas fa-bars"></i>
+            <span>{{ "Menu"|translate }}</span>
+        </a>
+    </nav>
 
     <!-- ==================== SCRIPTS & SDKS ==================== -->
     <!-- 1. Universal Real-Time Translator -->
@@ -266,11 +617,12 @@
     <script src="{{ url_for('static', filename='js/firebase-init.js') }}"></script>
 
     <script>
-        // Sidebar toggle for mobile
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('open');
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('AquaGuru PWA Service Worker registered:', reg.scope))
+                    .catch(err => console.log('Service Worker registration error:', err));
             });
         }
 

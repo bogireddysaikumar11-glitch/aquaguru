@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response, send_from_directory
 import os
 import uuid
 import base64
@@ -93,6 +93,17 @@ def set_language(lang_code):
     resp.set_cookie('lang', lang_code, max_age=365*86400, path='/')
     resp.set_cookie('googtrans', '', expires=0, path='/')
     return resp
+
+# ==================== PWA ROUTES ====================
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory(app.static_folder, 'manifest.json', mimetype='application/manifest+json')
+
+@app.route('/sw.js')
+def serve_sw():
+    response = make_response(send_from_directory(app.static_folder, 'sw.js', mimetype='application/javascript'))
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
 
 @app.template_filter('translate')
 def translate_filter(text):
