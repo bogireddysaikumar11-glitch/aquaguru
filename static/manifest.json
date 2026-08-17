@@ -2,23 +2,24 @@
   "name": "AquaGuru - Smart Shrimp & Fish Farm Management",
   "short_name": "AquaGuru",
   "description": "Smart Aquaculture Farm Management Platform for Shrimp and Fish Cultivation",
-  "start_url": "/dashboard",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b343d",
-  "theme_color": "#0b343d",
+  "background_color": "#ffffff",
+  "theme_color": "#07232a",
   "icons": [
     {
       "src": "/static/logo.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/static/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
