@@ -177,23 +177,38 @@ def test():
     engine = get_active_engine()
     return f"Hello! AquaGuru server is running smoothly with {engine.upper()} database engine."
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy", "service": "AquaGuru", "engine": get_active_engine()}), 200
+
+@app.route('/ping')
+def ping():
+    return "pong", 200
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if is_logged_in():
         return redirect(url_for('dashboard'))
     
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        hashed_password = hash_password(password)
+        raw_username = request.form.get('username', '')
+        raw_password = request.form.get('password', '')
+        
+        username = raw_username.strip()
+        password = raw_password.strip()
+        hashed_password = hash_password(raw_password)
+        hashed_password_clean = hash_password(password)
         
         connection = get_db_connection()
         if connection:
             cursor = connection.cursor(dictionary=True)
             try:
+                # Case-insensitive username/email matching for mobile keyboards
                 cursor.execute(
-                    "SELECT * FROM users WHERE (username = %s OR email = %s) AND password = %s",
-                    (username, username, hashed_password)
+                    """SELECT * FROM users 
+                       WHERE (LOWER(username) = LOWER(%s) OR LOWER(email) = LOWER(%s)) 
+                         AND (password = %s OR password = %s)""",
+                    (username, username, hashed_password, hashed_password_clean)
                 )
                 user = cursor.fetchone()
                 if user:

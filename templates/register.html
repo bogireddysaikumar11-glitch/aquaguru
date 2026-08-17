@@ -87,22 +87,22 @@
         <form action="/register" method="POST">
             <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">{{ "Email / Username"|translate }}</label>
-                <input type="text" name="username" class="form-control" placeholder="{{ 'Email / Username'|translate }}" required>
+                <input type="text" name="username" class="form-control" placeholder="{{ 'Email / Username'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
             </div>
 
             <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">{{ "Email"|translate }}</label>
-                <input type="email" name="email" class="form-control" placeholder="{{ 'Email'|translate }}" required>
+                <input type="email" name="email" class="form-control" placeholder="{{ 'Email'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="email" required>
             </div>
 
             <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">{{ "Password"|translate }}</label>
-                <input type="password" name="password" class="form-control" placeholder="{{ 'Password'|translate }}" required>
+                <input type="password" name="password" class="form-control" placeholder="{{ 'Password'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="new-password" required>
             </div>
 
             <div class="mb-4">
                 <label class="form-label small fw-bold text-muted">{{ "Confirm Password"|translate }}</label>
-                <input type="password" name="confirm_password" class="form-control" placeholder="{{ 'Confirm Password'|translate }}" required>
+                <input type="password" name="confirm_password" class="form-control" placeholder="{{ 'Confirm Password'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="new-password" required>
             </div>
 
             <button type="submit" class="btn-register mb-3">{{ "Sign Up"|translate }}</button>

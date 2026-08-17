@@ -227,7 +227,7 @@
                         <label>{{ "Email / Username"|translate }}</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
-                            <input type="text" name="username" placeholder="{{ 'Email / Username'|translate }}" required>
+                            <input type="text" name="username" placeholder="{{ 'Email / Username'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
                         </div>
                     </div>
 
@@ -235,7 +235,7 @@
                         <label>{{ "Password"|translate }}</label>
                         <div class="input-wrapper">
                             <i class="fas fa-lock"></i>
-                            <input type="password" name="password" placeholder="{{ 'Password'|translate }}" required>
+                            <input type="password" name="password" placeholder="{{ 'Password'|translate }}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="current-password" required>
                             <i class="fas fa-eye eye-icon" onclick="this.classList.toggle('fa-eye-slash'); const input = this.previousElementSibling; input.type = input.type === 'password' ? 'text' : 'password';"></i>
                         </div>
                     </div>

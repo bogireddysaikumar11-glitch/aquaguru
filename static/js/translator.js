@@ -536,26 +536,19 @@
         if (targetLang !== 'en' && targetLang !== 'te') targetLang = 'en';
 
         // 1. Save locally
-        localStorage.setItem('aqua_lang', targetLang);
+        try {
+            localStorage.setItem('aqua_lang', targetLang);
+        } catch (e) {}
         document.cookie = "lang=" + targetLang + "; path=/; max-age=31536000; SameSite=Lax";
         document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
 
         // 2. Instantly translate live DOM in 0 ms
         translateDOM(targetLang);
 
-        // 3. Notify backend and reload cleanly with anti-cache timestamp
-        const nextUrl = window.location.pathname;
+        // 3. Direct browser navigation for bulletproof mobile sync
+        const nextUrl = window.location.pathname + window.location.search;
         const syncUrl = "/set-language/" + targetLang + "?next=" + encodeURIComponent(nextUrl) + "&_t=" + Date.now();
-        
-        fetch(syncUrl, { method: 'GET', cache: 'no-store' })
-            .then(() => {
-                if (window.location.pathname) {
-                    window.location.reload();
-                }
-            })
-            .catch(() => {
-                window.location.reload();
-            });
+        window.location.href = syncUrl;
     };
 
     // Auto-initialize on page load
